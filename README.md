@@ -4,7 +4,7 @@ Essentially, "units" are things that produce or process sound, and they can be s
 
 Once a unit is compiled, it can be shared between multiple frames (think of this as a "device".) Here are some examples:
 
-- [web-based editor](LINK_NEEDED)
+- [web-based editor](http://konsumer.js.org/null-units/)
 - pi-zero handheld device with OLED screen and MIDI input
 - ESP32?
 
