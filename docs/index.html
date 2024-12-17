@@ -8,9 +8,8 @@
       align-items: center;
       gap: 5px;
     }
-
-    label, #freq {
-      width: 100%;
+    canvas {
+      width: 100px;
     }
     </style>
 
@@ -48,7 +47,7 @@
     </label>
 
     <label>
-      <input type="range" min="0" max="12544" value="440" id="freq" />
+      <input type="range" min="0" max="12544" value="440" name="freq" id="freq" />
       <div id="freq_output">440</div>
     </label>
 
@@ -72,8 +71,9 @@ async function load_unit(name, params = [], data={}) {
       get_bytes(id, offset, length, out) {
         console.log('get_bytes', id)
         if (data[id]) {
-          new Uint8Array(w.instance.exports.memory.buffer).set(data[id].slice(offset, offset+length), out, out+length)
+          new Uint8Array(w.instance.exports.memory.buffer).set(data[id].slice(offset, offset+length), out)
         }
+        console.log(data[id].slice(offset, offset+length))
       },
       trace(msgPtr) {
         console.log(getString(msgPtr))
@@ -173,15 +173,19 @@ const sampler = await load_unit('sampler', [], data)
 // also not part of engine, just handles UI
 const form = document.getElementById('ui')
 const freq_out = document.getElementById('freq_output')
-form.addEventListener('change', () => {
-  sampler.param_set(0, form.freq.value)
-  sampler.param_set(1, form.wave.value)
+form.addEventListener('change', (e) => {
+  if (e.target.name === 'freq') {
+    sampler.param_set(0, form.freq.value)
+  }
+  if (e.target.name === 'wave') {
+    sampler.param_set(1, form.wave.value)
+  }
   freq_out.innerHTML = form.freq.value
 })
 
 // do 1 frame, manually
 for (let i=0;i<255;i++){
-  console.log(sampler.process(i, 0, 0))
+  sampler.process(i, 0, 0)
 }
 
 

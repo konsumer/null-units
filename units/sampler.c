@@ -1,5 +1,7 @@
 // simple sampler null-unit
 // that can be used as an oscillator
+// eventually, I will embed wav-tables
+// but I am testing loading sample-data from host
 
 #include "null-unit.h"
 
@@ -67,6 +69,9 @@ void destroy() {}
 float process(unsigned char position, float input, unsigned char channel) {
     float scaledPos = (position * 4.0f * params[0]) / 440.0f;
     unsigned int samplePos = (unsigned int)scaledPos % 1024;
+    char o[20];
+    itoa(sample[samplePos], o);
+    trace(o);
     return *((float*)&sample[samplePos]);
 }
 

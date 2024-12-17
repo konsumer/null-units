@@ -1,4 +1,4 @@
-UNITS:=docs/copy.wasm docs/sampler.wasm docs/lpf.wasm docs/tremelo.wasm
+UNITS:=docs/copy.wasm docs/sampler.wasm docs/lpf.wasm
 
 .PHONY: all clean server
 
