@@ -1,0 +1,191 @@
+<html>
+  <head>
+    <title>null-units</title>
+    <link rel="icon" type="image/x-icon" href="https://avatars.githubusercontent.com/u/10213618" />
+    <style>
+    label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    label, #freq {
+      width: 100%;
+    }
+    </style>
+
+  </head>
+  <body>
+
+    <p>
+    This loads a single sampler unit which has access to these waves:
+    </p>
+
+    <form id="ui">
+
+    <label>
+      <input type="radio" name="wave" value="0" checked/>
+      <div>sin</div>
+      <canvas width="256" height="100"></canvas>
+    </label>
+
+    <label>
+      <input type="radio" name="wave" value="1"/>
+      <div>sqr</div>
+      <canvas width="256" height="100"></canvas>
+    </label>
+
+    <label>
+      <input type="radio" name="wave" value="2"/>
+      <div>tri</div>
+      <canvas width="256" height="100"></canvas>
+    </label>
+
+    <label>
+      <input type="radio" name="wave" value="3"/>
+      <div>saw</div>
+      <canvas width="256" height="100"></canvas>
+    </label>
+
+    <label>
+      <input type="range" min="0" max="12544" value="440" id="freq" />
+      <div id="freq_output">440</div>
+    </label>
+
+    </form>
+
+  </body>
+  <script type="module">
+const decoder = new TextDecoder()
+async function load_unit(name, params = [], data={}) {
+  function getString(p) {
+    let len = 0
+    const b = new Uint8Array(w.instance.exports.memory.buffer.slice(p, p + 1024))
+    while(b[len] !== 0) {
+      len++
+      if (len > 1024) break
+    }
+    return decoder.decode(w.instance.exports.memory.buffer.slice(p, p + len))
+  }
+  const imports = {
+    env: {
+      get_bytes(id, offset, length, out) {
+        console.log('get_bytes', id)
+        if (data[id]) {
+          new Uint8Array(w.instance.exports.memory.buffer).set(data[id].slice(offset, offset+length), out, out+length)
+        }
+      },
+      trace(msgPtr) {
+        console.log(getString(msgPtr))
+      }
+    }
+  }
+  const w = await WebAssembly.instantiateStreaming(fetch(`${name}.wasm`), imports)
+  let ptr = 0
+  if (params.length) {
+    ptr = w.instance.exports.malloc(params.length * 4)
+    const v = new DataView(w.instance.exports.memory.buffer.slice(ptr, ptr + (params.length * 4)))
+    let i = 0
+    for (const val of params) {
+      v.setUint32(i, val, true)
+      i+=4
+    }
+  }
+  if (w.instance.exports.init) {
+    w.instance.exports.init(ptr)
+  }
+  if (ptr) {
+    w.instance.exports.free(ptr)
+  }
+  return w.instance.exports
+}
+
+// not really part of engine, this will show waveform
+const canvases = document.querySelectorAll('canvas')
+function draw_wav(id, data) {
+  const canvas = canvases[id];
+  const ctx = canvas.getContext('2d');
+  const width = canvas.width;
+  const height = canvas.height;
+  const middleY = height / 2;
+  ctx.clearRect(0, 0, width, height);
+  ctx.beginPath();
+  ctx.strokeStyle = '#999';
+  ctx.lineWidth = 1;
+  ctx.moveTo(0, middleY);
+  ctx.lineTo(width, middleY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#f00';
+  ctx.lineWidth = 2;
+  const yScale = height / 2;
+  for (let i = 0; i < data.length; i++) {
+    const x = i;
+    const y = middleY - (data[i] * yScale);
+    if (i === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+}
+
+// this holds samples and stuff
+const data = {}
+const f = new Float32Array(256)
+
+for (let w=0; w<4; w++) {
+  for (let i = 0; i<256; i++) {
+    const phase = i / 256;
+    if (w==0) {
+      // sine - already crosses zero
+      f[i] = Math.sin(2 * Math.PI * phase)
+    }
+    if (w==1) {
+      // square, offset to 0-crossing
+      f[i] = phase < 0.5 ? 1.0 : -1.0
+      if (i === 0 || i === 255) f[i] = 0
+    }
+    if (w==2) {
+      // triangle - starts and ends at zero
+      if (phase < 0.25) {
+        f[i] = 4 * phase
+      } else if (phase < 0.75) {
+        f[i] = 2 - 4 * phase
+      } else {
+        f[i] = -4 + 4 * phase
+      }
+    }
+    if (w==3) {
+      // sawtooth - shift phase by 0.5 to start at zero
+      f[i] = -1 + 2 * ((phase + 0.5) % 1)
+    }
+  }
+  data[w] = f.subarray(0, 255).buffer
+  draw_wav(w, f)
+}
+
+// load sampler at 440Hz, and it wil load #0 sample
+const sampler = await load_unit('sampler', [], data)
+
+// also not part of engine, just handles UI
+const form = document.getElementById('ui')
+const freq_out = document.getElementById('freq_output')
+form.addEventListener('change', () => {
+  sampler.param_set(0, form.freq.value)
+  sampler.param_set(1, form.wave.value)
+  freq_out.innerHTML = form.freq.value
+})
+
+// do 1 frame, manually
+for (let i=0;i<255;i++){
+  console.log(sampler.process(i, 0, 0))
+}
+
+
+
+
+  </script>
+</html>

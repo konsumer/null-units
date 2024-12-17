@@ -1,4 +1,4 @@
-The idea with this is inspired by [Korg's logue API](https://korginc.github.io/logue-sdk/).
+The idea with this is inspired by [Korg's logue API](https://korginc.github.io/logue-sdk/) and [puredata](https://puredata.info/).
 
 Essentially, "units" are things that produce or process sound, and they can be strung together to create instrumnents. They are made in wasm, and can be written in any programming language that compiles to that.
 
@@ -8,22 +8,25 @@ Once a unit is compiled, it can be shared between multiple frames (think of this
 - pi-zero handheld device with OLED screen and MIDI input
 - ESP32?
 
-The [NTS-3](https://www.korg.com/us/products/dj/nts_3/) as an example, has X/Y/depth params that can be tied to any param (max 8 each) of 4 units, and then routed to each other. This will do similar, but allows more params, and units can be shared beteween any device.
+The [NTS-3](https://www.korg.com/us/products/dj/nts_3/) as an example device, has only X/Y/depth params that can be tied to any param (max 8 each unit) of 4 units, and then units can be routed to each other. This will do similar, but allows more params, and units can be shared between any device, and written in any language.
 
 
 ## unit API
 
-There are only a few functions. Implement those in your unit, and it will work in the rest of the ecosystem. I am using C here, but you can use anything you like.
+There are only a few functions to export. Implement those in your unit, and it will work in the rest of the ecosystem. I am using C here, but you can use anything you like.
 
 ```c
-// called when the unit is loaded, returns the number of params it accepts
-unsigned int init();
+// called when the unit is loaded, set initialParams to NULL, if you want
+void init(unsigned int initialParams[]);
 
 // process a single value, in a 0-255 position frame, return output
 float process(unsigned char position, float input, unsigned char channel);
 
 // called when you plugin is unloaded
 void destroy();
+
+// get param count
+unsigned int get_param_count();
 
 // set a parameter
 void param_set(unsigned int param, unsigned int value);
@@ -51,13 +54,20 @@ unsigned int now();
 float random();
 
 // get some named bytes (sample, etc) from host
-unsigned int get_bytes(char* name, unsigned int offset, unsigned int length);
+void get_bytes(unsigned int id, unsigned int offset, unsigned int length, unsigned int* out);
+
+// memory management
+void* malloc(size_t size);
+void free(void *ptr);
+void* memset(void* ptr, int value, size_t num);
+
+// utils for debugging
+void join_strings(char *dest, const char *src);
+void itoa(int num, char* str);
+void ftoa(float num, char* str, int precision);
 ```
 
-Additionally, host provides the math.h functions, using floats instead of doubles (faster low-mem math.)
-
-
-Additionally, some helpers will be provided for languages, when people make them. This means that I will probly have more tooling for C than assemblyscript, for exmaple, since I am making stuff using that.
+Additionally, host provides the [math.h functions](https://en.wikipedia.org/wiki/C_mathematical_functions), just because they are needed for a lot of audio-math, and it's nice to not need any other headers.
 
 ### ideas
 
