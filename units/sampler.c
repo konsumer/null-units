@@ -43,7 +43,7 @@ char* get_name_unit() {
 
 // get param count
 unsigned int get_param_count() {
-  return 2;
+  return sizeof(params) / sizeof(int);
 }
 
 // returns the name of the parameter (32 characters, max)

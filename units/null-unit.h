@@ -151,6 +151,8 @@ double fmod(double x, double y);
 __attribute__((import_module("env"), import_name("round")))
 double round(double x);
 
+#define M_PI   3.14159265358979323846264338327950288
+
 // simple utils
 
 void itoa(int num, char* str) {
