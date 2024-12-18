@@ -8,7 +8,7 @@
       align-items: center;
       gap: 5px;
     }
-    canvas {
+    label canvas {
       width: 100px;
     }
     </style>
@@ -50,8 +50,6 @@
       <div id="freq_output">440</div>
     </label>
 
-
-    <p>Currently this is just reference, since my nodes are not outputting anything:</p>
     <canvas id="oscope"></canvas>
 
     </form>
@@ -108,6 +106,10 @@
     console.log('unit loaded', samplerExample.info)
     samplerExample.connect(context.destination)
 
+    // set intial values
+    samplerExample.setParam('pitch', 440)
+    samplerExample.setParam('sample ID', 0)
+
     const canvases = [...document.querySelectorAll('canvas')]
     const oscope = canvases.pop()
     for (const c in canvases) {
@@ -115,15 +117,14 @@
     }
 
     const oscilloscope = new Oscilloscope(oscope);
-    // oscilloscope.init(context, samplerExample.audioWorkletNode)
+    oscilloscope.init(context, samplerExample.audioWorkletNode)
 
     // example that uses audio-api oscillator instead
-    const oscillator = context.createOscillator()
-    oscillator.type = "sine"
-    oscillator.frequency.setValueAtTime(440, context.currentTime)
-    // oscillator.connect(context.destination)
-    oscillator.start()
-    oscilloscope.init(context, oscillator)
+    // const oscillator = context.createOscillator()
+    // oscillator.type = "sine"
+    // oscillator.frequency.setValueAtTime(440, context.currentTime)
+    // oscillator.start()
+    // oscilloscope.init(context, oscillator)
 
 
     const form = document.getElementById('ui')

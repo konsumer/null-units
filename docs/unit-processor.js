@@ -5,6 +5,8 @@ const { TextDecoder  } = d
 
 const decoder = new TextDecoder()
 
+let printed = false
+
 class NullUnitProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
@@ -58,12 +60,9 @@ class NullUnitProcessor extends AudioWorkletProcessor {
           console.log(this.getString(msgPtr))
         },
 
-        get_bytes(id, offset, length, out) {
-          // console.log('get_bytes', { id, offset, length, out })
-          if (this.data[id]) {
-            // console.log(this.data[id].slice(offset, offset+length))
-            new Uint8Array(this.wasmInstance.memory.buffer).set(this.data[id].buffer.slice(offset, offset+length), out);
-          }
+        get_data_floats(id, offset, length, out) {
+          const mem = new Uint8Array(this.wasmInstance.memory.buffer)
+          mem.set(new Uint8Array(this.data[id].buffer.slice(offset, offset + (length * 4))), out)
         },
       }
     }
@@ -106,6 +105,7 @@ class NullUnitProcessor extends AudioWorkletProcessor {
         this.port.postMessage({ id, response: this.data[message.index] })
       }
 
+      // get the last id of samples (for adding new one)
       if (message.type === 'get_last_sample') {
         this.port.postMessage({ id, response: Object.keys(this.data).pop() })
       }
@@ -119,7 +119,7 @@ class NullUnitProcessor extends AudioWorkletProcessor {
       // allow parent thread to set params
       if (message.type === 'param_set') {
         if (this.wasmInstance?.param_set) {
-          this.wasmInstance?.param_set(message.param, message.value)
+          this.wasmInstance.param_set(message.param, message.value)
         }
         this.port.postMessage({ id, response: true })
       }
@@ -145,8 +145,10 @@ class NullUnitProcessor extends AudioWorkletProcessor {
       for (let i = 0; i < outputChannel.length; i++) {
         this.position = (this.position + 1) % 256;
         outputChannel[i] = this.wasmInstance.process(this.position, 0, channel);
+        // if (!printed) console.log(i, outputChannel[i])
       }
     }
+    printed = true
     return true;
   }
 
