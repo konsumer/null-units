@@ -8,20 +8,20 @@ function getFilePath() {
 }
 
 export default class NullUnit {
-  constructor(context){
+  constructor(context) {
     this.context = context
-    this.messageMap = new Map();
-    this.messageId = 0;
+    this.messageMap = new Map()
+    this.messageId = 0
     this.info = {}
   }
 
   // async send that can await return
   async send(message) {
-    const id = this.messageId++;
-    return new Promise(resolve => {
-      this.messageMap.set(id, { resolve });
-      this.audioWorkletNode.port.postMessage({ id, message });
-    });
+    const id = this.messageId++
+    return new Promise((resolve) => {
+      this.messageMap.set(id, { resolve })
+      this.audioWorkletNode.port.postMessage({ id, message })
+    })
   }
 
   // load the wasm null-unit
@@ -30,19 +30,19 @@ export default class NullUnit {
     console.log(dir)
 
     await this.context.audioWorklet.addModule(`${dir}/unit-processor.js`)
-    this.audioWorkletNode = new AudioWorkletNode(this.context, 'null-unit');
+    this.audioWorkletNode = new AudioWorkletNode(this.context, 'null-unit')
     // setup async messaging
     this.audioWorkletNode.port.onmessage = (event) => {
-      const { id, response } = event.data;
+      const { id, response } = event.data
       if (this.messageMap.has(id)) {
-        const { resolve } = this.messageMap.get(id);
-        resolve(response);
-        this.messageMap.delete(id);
+        const { resolve } = this.messageMap.get(id)
+        resolve(response)
+        this.messageMap.delete(id)
       }
-    };
+    }
 
-    const bytes = await fetch(`${dir}/${name}.wasm`).then(r => r.arrayBuffer())
-    this.info = await this.send({type: 'load', bytes})
+    const bytes = await fetch(`${dir}/${name}.wasm`).then((r) => r.arrayBuffer())
+    this.info = await this.send({ type: 'load', bytes })
   }
 
   // set a unit param
@@ -71,17 +71,17 @@ export default class NullUnit {
 
   // add a new sample (data is float32)
   async addSample(data) {
-    const lastSample = await this.send({ type: 'get_last_sample' })|0
+    const lastSample = (await this.send({ type: 'get_last_sample' })) | 0
     return this.setSample(lastSample + 1, data)
   }
 
   connect(outlet) {
-    this.audioWorkletNode.connect(outlet);
+    this.audioWorkletNode.connect(outlet)
   }
 
   // clean up
   disconnect() {
-    this.audioWorkletNode.disconnect();
-    this.messageMap.clear();
+    this.audioWorkletNode.disconnect()
+    this.messageMap.clear()
   }
 }
