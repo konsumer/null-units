@@ -4,6 +4,8 @@
 
 // called when the unit is loaded, returns the number of params it accepts
 void init() {
+  // disable printf buffering
+  setvbuf(stdout, NULL, _IONBF, 0);
 }
 
 // returns the name of the unit (32 characters, max)

@@ -1,13 +1,19 @@
 // this will load a null-unit wasm, as an AudioWorklet
 
+// TODO: inline this?
 import d from 'https://esm.sh/text-encoding-shim'
+
 const { TextDecoder } = d
 
 const decoder = new TextDecoder()
 
+const defs = {
+  ERRNO_SUCCESS: 0
+}
+
 class NullUnitProcessor extends AudioWorkletProcessor {
   constructor() {
-    super()
+    super({numberOfInputs: 1, numberOfOutputs: 1})
     this.wasmInstance = null
     this.position = 0
 
@@ -52,6 +58,57 @@ class NullUnitProcessor extends AudioWorkletProcessor {
     }
 
     // this is host-functions exposed to the unit-wasm
+    const wasi_snapshot_preview1 = {
+      args_get() {
+        return 0
+      },
+      args_sizes_get() {
+        return 0
+      },
+      fd_close() {},
+      fd_fdstat_get() {},
+      fd_seek() {},
+      fd_write (fd, iovs, iovsLen, nwrittenPtr) {
+          let written = 0
+          const chunks = []
+          const view = new DataView(this.wasmInstance.memory.buffer)
+          const mem = new Uint8Array(this.wasmInstance.memory.buffer)
+
+          // Gather all the chunks from the vectors
+          for (let i = 0; i < iovsLen; i++) {
+            const ptr = iovs + i * 8
+            const buf = view.getUint32(ptr, true)
+            const bufLen = view.getUint32(ptr + 4, true)
+            chunks.push(new Uint8Array(mem.buffer, buf, bufLen))
+            written += bufLen
+          }
+
+          // Concatenate chunks if needed
+          let buffer
+          if (chunks.length === 1) {
+            buffer = chunks[0]
+          } else {
+            buffer = new Uint8Array(written)
+            let offset = 0
+            for (const chunk of chunks) {
+              buffer.set(chunk, offset)
+              offset += chunk.length
+            }
+          }
+
+          // Handle standard streams
+          if (fd === 1) {
+            console.log(decoder.decode(buffer))
+          } else if (fd === 2) {
+            console.error(decoder.decode(buffer))
+          }
+
+          view.setUint32(nwrittenPtr, written, true)
+          return defs.ERRNO_SUCCESS
+        },
+      proc_exit() { }
+    }
+
     const importObject = {
       env: {
         trace(msgPtr) {
@@ -62,12 +119,16 @@ class NullUnitProcessor extends AudioWorkletProcessor {
           const mem = new Uint8Array(this.wasmInstance.memory.buffer)
           mem.set(new Uint8Array(this.data[id].buffer.slice(offset, offset + length * 4)), out)
         }
-      }
+      },
+      wasi_snapshot_preview1
     }
 
     // bind importObject to worklet
     for (const k of Object.keys(importObject.env)) {
       importObject.env[k] = importObject.env[k].bind(this)
+    }
+    for (const k of Object.keys(importObject.wasi_snapshot_preview1)) {
+      importObject.wasi_snapshot_preview1[k] = importObject.wasi_snapshot_preview1[k].bind(this)
     }
 
     this.port.onmessage = async ({ data: { id, message } }) => {
@@ -138,10 +199,12 @@ class NullUnitProcessor extends AudioWorkletProcessor {
   process(inputs, outputs, parameters) {
     if (!this?.wasmInstance?.process) return true
     const output = outputs[0]
+    const input = inputs[0]
     for (let channel = 0; channel < output.length; channel++) {
       const outputChannel = output[channel]
+      const inputChannel = input[channel] || []
       for (let i = 0; i < outputChannel.length; i++) {
-        outputChannel[i] = this.wasmInstance.process(this.position++, 0, channel)
+        outputChannel[i] = this.wasmInstance.process(this.position++, inputChannel[i] || 0, channel)
       }
     }
     return true

@@ -1,8 +1,6 @@
-# set this to wherever you have clang command
-# I am making it easier on myself to just use wasi-sdk's pre-configured clang
-# but you should be able to use the standard version
-CLANG:=/opt/wasi-sdk/bin/clang
+WASI_SDK_PATH:=/opt/wasi-sdk
+CLANG:=${WASI_SDK_PATH}/bin/clang
 
 # build a unit
 docs/%.wasm: units/%.c
-	${CLANG} -O3 --target=wasm32 --no-standard-libraries -Wl,--no-entry -o $@ $^
+	${CLANG} -O3 --sysroot=${WASI_SDK_PATH}/share/wasi-sysroot -Wl,--no-entry -o $@ $^

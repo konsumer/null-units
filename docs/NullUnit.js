@@ -20,7 +20,7 @@ export default class NullUnit {
     const id = this.messageId++
     return new Promise((resolve) => {
       this.messageMap.set(id, { resolve })
-      this.audioWorkletNode.port.postMessage({ id, message })
+      this.input.port.postMessage({ id, message })
     })
   }
 
@@ -30,9 +30,9 @@ export default class NullUnit {
     console.log(dir)
 
     await this.context.audioWorklet.addModule(`${dir}/unit-processor.js`)
-    this.audioWorkletNode = new AudioWorkletNode(this.context, 'null-unit')
+    this.input = new AudioWorkletNode(this.context, 'null-unit')
     // setup async messaging
-    this.audioWorkletNode.port.onmessage = (event) => {
+    this.input.port.onmessage = (event) => {
       const { id, response } = event.data
       if (this.messageMap.has(id)) {
         const { resolve } = this.messageMap.get(id)
@@ -76,12 +76,12 @@ export default class NullUnit {
   }
 
   connect(outlet) {
-    this.audioWorkletNode.connect(outlet)
+    this.input.connect(outlet)
   }
 
   // clean up
   disconnect() {
-    this.audioWorkletNode.disconnect()
+    this.input.disconnect()
     this.messageMap.clear()
   }
 }

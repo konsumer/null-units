@@ -8,7 +8,6 @@
 #define PARAM_PITCH 0
 #define PARAM_SAMPLE 1
 #define PARAM_LAST 1
-
 unsigned int params[2];
 
 #define SAMPLE_COUNT 256
@@ -18,6 +17,9 @@ float sample[SAMPLE_COUNT] = {};
 
 // called when the unit is loaded
 void init() {
+  // disable printf buffering
+  setvbuf(stdout, NULL, _IONBF, 0);
+
   // this forces it to trigger on change
   params[PARAM_SAMPLE] = -1;
 }
@@ -29,14 +31,14 @@ char* get_name_unit() {
 
 // get param count
 unsigned int get_param_count() {
-  return sizeof(params) / sizeof(int);
+  return PARAM_LAST + 1;
 }
 
 // returns the name of the parameter (32 characters, max)
 char* get_name_param(unsigned int param) {
   switch(param) {
     case PARAM_PITCH: return "pitch";
-    case PARAM_SAMPLE: return "sample ID";
+    case PARAM_SAMPLE: return "sample";
     default: return NULL;
   }
 }

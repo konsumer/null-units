@@ -28,11 +28,9 @@ npm run build
 
 There are only a few functions to export. Implement those in your unit, and it will work in the rest of the ecosystem. I am using C here, but you can use anything you like.
 
-Additionally, host provides the [math.h functions](https://en.wikipedia.org/wiki/C_mathematical_functions), just because they are needed for a lot of audio-math, and it's nice to not need any other headers.
-
 Things are in flux right now, so check [null-unit.h](units/null-unit.h) to see what is available.
 
-
+The essential plan is basic WASI preview1, without files.
 
 
 ## ideas
