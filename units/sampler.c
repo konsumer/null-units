@@ -12,7 +12,7 @@
 unsigned int params[2];
 
 // this holds the same loaded from host (0-255 position float)
-unsigned int sample[1024] = {};
+float sample[256] = {};
 
 
 // called when the unit is loaded
@@ -24,7 +24,8 @@ void init(unsigned int initialParams[2]) {
     params[PARAM_PITCH] = 440;
     params[PARAM_SAMPLE] = 0;
   }
-  get_bytes(params[PARAM_SAMPLE], 0, 1024, sample);
+  // load initial sample
+  get_bytes(params[PARAM_SAMPLE], 0, 256, sample);
   show_params(params);
 }
 
@@ -58,13 +59,14 @@ void destroy() {}
 // process a single value, in a 0-255 position frame, return output
 float process(unsigned char position, float input, unsigned char channel) {
     float scaledPos = (position * 4.0f * params[PARAM_PITCH]) / 440.0f;
-    unsigned int samplePos = (unsigned int)scaledPos % 1024;
+    unsigned int samplePos = (unsigned int)scaledPos % 256;
 
-    char o[20];
-    itoa(sample[samplePos], o);
-    trace(o);
+    // output list of frame
+    // char o[20];
+    // ftoa(sample[samplePos], o, 4);
+    // trace(o);
 
-    return *((float*)&sample[samplePos]);
+    return sample[samplePos];
 }
 
 // set a parameter
@@ -74,9 +76,9 @@ void param_set(unsigned int param, unsigned int value) {
   }
   params[param] = value;
 
-  // load sample form host if it changed
+  // load sample from host if it changed
   if (param == PARAM_SAMPLE && value != params[PARAM_SAMPLE]) {
-    get_bytes(params[PARAM_SAMPLE], 0, 1024, sample);
+    get_bytes(params[PARAM_SAMPLE], 0, 256, sample);
   }
 
   show_params(params);

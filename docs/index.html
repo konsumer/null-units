@@ -69,11 +69,15 @@ async function load_unit(name, params = [], data={}) {
   const imports = {
     env: {
       get_bytes(id, offset, length, out) {
-        console.log('get_bytes', id)
-        if (data[id]) {
-          new Uint8Array(w.instance.exports.memory.buffer).set(data[id].slice(offset, offset+length), out)
-        }
-        console.log(data[id].slice(offset, offset+length))
+        console.log('get_bytes', id);
+              if (data[id]) {
+                // Create a Float32Array view of your data
+                const floatView = new Float32Array(data[id]);
+                // Create a Uint8Array view of the same data for byte-level copying
+                const byteView = new Uint8Array(floatView.buffer);
+                // Copy the bytes to WebAssembly memory
+                new Uint8Array(w.instance.exports.memory.buffer).set(byteView, out);
+              }
       },
       trace(msgPtr) {
         console.log(getString(msgPtr))
@@ -100,7 +104,7 @@ async function load_unit(name, params = [], data={}) {
   return w.instance.exports
 }
 
-// not really part of engine, this will show waveform
+// not really part of engine, this will show waveform on a canvas
 const canvases = document.querySelectorAll('canvas')
 function draw_wav(id, data) {
   const canvas = canvases[id];
@@ -136,6 +140,7 @@ function draw_wav(id, data) {
 const data = {}
 const f = new Float32Array(256)
 
+// build some 256-length Float32Arrays for waveform data
 for (let w=0; w<4; w++) {
   for (let i = 0; i<256; i++) {
     const phase = i / 256;
@@ -163,7 +168,8 @@ for (let w=0; w<4; w++) {
       f[i] = -1 + 2 * ((phase + 0.5) % 1)
     }
   }
-  data[w] = f.subarray(0, 255).buffer
+  // copy the data into data[id]
+  data[w] = new Float32Array(f.subarray(0, 256))
   draw_wav(w, f)
 }
 

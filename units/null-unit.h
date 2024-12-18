@@ -57,7 +57,7 @@ float random();
 
 // get some named bytes (sample, etc) from host
 __attribute__((import_module("env"), import_name("get_bytes")))
-void get_bytes(unsigned int id, unsigned int offset, unsigned int length, unsigned int* out);
+void get_bytes(unsigned int id, unsigned int offset, unsigned int length, float* out);
 
 // Reduced-precision math functions, exposed from host
 
