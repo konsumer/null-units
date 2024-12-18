@@ -4,7 +4,9 @@
 
 // these are exposed from a unit
 
-// called when the unit is loaded, returns the number of params it accepts
+
+
+// called when the unit is loaded
 __attribute__((export_name("init")))
 void init(unsigned int* initialParams);
 
@@ -270,4 +272,21 @@ void* memset(void* ptr, int value, size_t num) {
     byte_ptr[i] = (unsigned char)value;
   }
   return ptr;
+}
+
+// debug function to show my current params
+void show_params(unsigned int params[]) {
+  char out[1024];
+  char numstring[10];
+  memset(out, 0, 1024);
+  join_strings(out, get_name_unit());
+  join_strings(out, "\n");
+  for (int i=0;i<get_param_count();i++) {
+    join_strings(out, get_name_param(i));
+    join_strings(out, ": ");
+    itoa(params[i], numstring);
+    join_strings(out, numstring);
+    join_strings(out, "\n");
+  }
+  trace(out);
 }
