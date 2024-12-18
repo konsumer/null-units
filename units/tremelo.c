@@ -8,9 +8,7 @@
 static float params[3];
 
 // called when the unit is loaded, returns the number of params it accepts
-void init(unsigned int initialParams[]) {
-  params[PARAM_DEPTH] = initialParams ? (float)initialParams[PARAM_DEPTH] : 100.0f;
-  params[PARAM_RATE] = initialParams ? (float)initialParams[PARAM_RATE] : 100.0f;
+void init() {
 }
 
 // returns the name of the unit (32 characters, max)

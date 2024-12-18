@@ -3,7 +3,7 @@
 #include "null-unit.h"
 
 // called when the unit is loaded, returns the number of params it accepts
-void init(unsigned int initialParams[]) {
+void init() {
 }
 
 // returns the name of the unit (32 characters, max)

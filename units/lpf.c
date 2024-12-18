@@ -9,13 +9,7 @@
 static float buffer[256];
 static unsigned int params[3];
 
-void init(unsigned int initialParams[]) {
-  params[PARAM_GAIN] = initialParams ? initialParams[PARAM_GAIN] : 50;
-  params[PARAM_FREQUENCY] = initialParams ? initialParams[PARAM_FREQUENCY] : 440;
-  params[PARAM_RESONANCE] = initialParams ? initialParams[PARAM_RESONANCE] : 0;
-  for(int i = 0; i < 256; i++) {
-    buffer[i] = 0.0f;
-  }
+void init() {
 }
 
 float process(unsigned char position, float input, unsigned char channel) {

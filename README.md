@@ -10,6 +10,19 @@ Once a unit is compiled, it can be shared between multiple frames (think of this
 
 The [NTS-3](https://www.korg.com/us/products/dj/nts_3/) as an example device, has only X/Y/depth params that can be tied to any param (max 8 each unit) of 4 units, and then units can be routed to each other. This will do similar, but allows more params, and units can be shared between any device, and written in any language.
 
+## tools
+
+```bash
+# live-reloading webserver
+npm start
+
+# delete built files
+npm run clean
+
+# just build units
+npm run build
+```
+
 
 ## unit API
 
@@ -17,9 +30,12 @@ There are only a few functions to export. Implement those in your unit, and it w
 
 Additionally, host provides the [math.h functions](https://en.wikipedia.org/wiki/C_mathematical_functions), just because they are needed for a lot of audio-math, and it's nice to not need any other headers.
 
-THings are in flux right now, so check [null-unit.h](units/null-unit.h) to see what is available.
+Things are in flux right now, so check [null-unit.h](units/null-unit.h) to see what is available.
 
-### ideas
+
+
+
+## ideas
 
 - make a puredata frame for these, so you can play with them there, like `[null-unit~ oscillator]` (to load oscillator.wasm from central dir)
 - storage format loading several units, and their routing & initial values (to share instruments made up of units between things)

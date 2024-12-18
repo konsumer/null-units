@@ -1,0 +1,12 @@
+{
+  "scripts":  {
+    "start": "npx -y npm-run-all -p start:web watch",
+    "start:web": "npx -y live-server docs",
+    "build": "npx -y npm-run-all -p build:*",
+    "build:lpf": "make docs/lpf.wasm",
+    "build:sampler": "make docs/sampler.wasm",
+    "build:copy": "make docs/copy.wasm",
+    "watch": "npx -y nodemon -w units -e 'c h' --exec 'npm run build'",
+    "clean": "npx -y rimraf docs/*.wasm"
+  }
+}
