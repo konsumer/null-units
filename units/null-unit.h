@@ -8,7 +8,7 @@
 
 // called when the unit is loaded
 __attribute__((export_name("init")))
-void init(unsigned int* initialParams);
+void init();
 
 // process a single value, in a 0-255 position frame, return output
 __attribute__((export_name("process")))

@@ -16,16 +16,11 @@ float sample[256] = {};
 
 
 // called when the unit is loaded
-void init(unsigned int initialParams[2]) {
-  if (initialParams != NULL) {
-    params[PARAM_PITCH] = initialParams[PARAM_PITCH];
-    params[PARAM_SAMPLE] = initialParams[PARAM_SAMPLE];
-  } else {
-    params[PARAM_PITCH] = 440;
-    params[PARAM_SAMPLE] = 0;
-  }
-  // load initial sample
+void init() {
+  // set intiial values
+  params[0] = 440;
   get_bytes(params[PARAM_SAMPLE], 0, 256, sample);
+
   show_params(params);
 }
 

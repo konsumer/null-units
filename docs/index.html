@@ -51,151 +51,83 @@
       <div id="freq_output">440</div>
     </label>
 
+    <canvas id="oscope"></canvas>
+
     </form>
 
   </body>
   <script type="module">
-const decoder = new TextDecoder()
-async function load_unit(name, params = [], data={}) {
-  function getString(p) {
-    let len = 0
-    const b = new Uint8Array(w.instance.exports.memory.buffer.slice(p, p + 1024))
-    while(b[len] !== 0) {
-      len++
-      if (len > 1024) break
-    }
-    return decoder.decode(w.instance.exports.memory.buffer.slice(p, p + len))
-  }
-  const imports = {
-    env: {
-      get_bytes(id, offset, length, out) {
-        console.log('get_bytes', id);
-              if (data[id]) {
-                // Create a Float32Array view of your data
-                const floatView = new Float32Array(data[id]);
-                // Create a Uint8Array view of the same data for byte-level copying
-                const byteView = new Uint8Array(floatView.buffer);
-                // Copy the bytes to WebAssembly memory
-                new Uint8Array(w.instance.exports.memory.buffer).set(byteView, out);
-              }
-      },
-      trace(msgPtr) {
-        console.log(getString(msgPtr))
-      }
-    }
-  }
-  const w = await WebAssembly.instantiateStreaming(fetch(`${name}.wasm`), imports)
-  let ptr = 0
-  if (params.length) {
-    ptr = w.instance.exports.malloc(params.length * 4)
-    const v = new DataView(w.instance.exports.memory.buffer.slice(ptr, ptr + (params.length * 4)))
-    let i = 0
-    for (const val of params) {
-      v.setUint32(i, val, true)
-      i+=4
-    }
-  }
-  if (w.instance.exports.init) {
-    w.instance.exports.init(ptr)
-  }
-  if (ptr) {
-    w.instance.exports.free(ptr)
-  }
-  return w.instance.exports
-}
+  import NullUnit from './NullUnit.js'
 
-// not really part of engine, this will show waveform on a canvas
-const canvases = document.querySelectorAll('canvas')
-function draw_wav(id, data) {
-  const canvas = canvases[id];
-  const ctx = canvas.getContext('2d');
-  const width = canvas.width;
-  const height = canvas.height;
-  const middleY = height / 2;
-  ctx.clearRect(0, 0, width, height);
-  ctx.beginPath();
-  ctx.strokeStyle = '#999';
-  ctx.lineWidth = 1;
-  ctx.moveTo(0, middleY);
-  ctx.lineTo(width, middleY);
-  ctx.stroke();
+  // this is basic setup of the frame of things
+  const context = new AudioContext();
+  await context.audioWorklet.addModule(`${import.meta.url}/unit-processor.js`)
 
-  ctx.beginPath();
-  ctx.strokeStyle = '#f00';
-  ctx.lineWidth = 2;
-  const yScale = height / 2;
-  for (let i = 0; i < data.length; i++) {
-    const x = i;
-    const y = middleY - (data[i] * yScale);
-    if (i === 0) {
-      ctx.moveTo(x, y);
-    } else {
-      ctx.lineTo(x, y);
+  document.addEventListener('click', () => {
+    if (context.state === "suspended") {
+      context.resume()
+      console.log('resumed')
     }
-  }
-  ctx.stroke();
-}
+  })
 
-// this holds samples and stuff
-const data = {}
-const f = new Float32Array(256)
+  // this is UI stuff
+  // get all samples from unit-worker and show them
+  // send params when they change
 
-// build some 256-length Float32Arrays for waveform data
-for (let w=0; w<4; w++) {
-  for (let i = 0; i<256; i++) {
-    const phase = i / 256;
-    if (w==0) {
-      // sine - already crosses zero
-      f[i] = Math.sin(2 * Math.PI * phase)
+  function drawWave(canvas, data) {
+    if (!canvas?.getContext) {
+      return
     }
-    if (w==1) {
-      // square, offset to 0-crossing
-      f[i] = phase < 0.5 ? 1.0 : -1.0
-      if (i === 0 || i === 255) f[i] = 0
-    }
-    if (w==2) {
-      // triangle - starts and ends at zero
-      if (phase < 0.25) {
-        f[i] = 4 * phase
-      } else if (phase < 0.75) {
-        f[i] = 2 - 4 * phase
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const middleY = height / 2;
+    ctx.clearRect(0, 0, width, height);
+    ctx.beginPath();
+    ctx.strokeStyle = '#999';
+    ctx.lineWidth = 1;
+    ctx.moveTo(0, middleY);
+    ctx.lineTo(width, middleY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#f00';
+    ctx.lineWidth = 2;
+    const yScale = height / 2;
+    for (let i = 0; i < data.length; i++) {
+      const x = i;
+      const y = middleY - (data[i] * yScale);
+      if (i === 0) {
+        ctx.moveTo(x, y);
       } else {
-        f[i] = -4 + 4 * phase
+        ctx.lineTo(x, y);
       }
     }
-    if (w==3) {
-      // sawtooth - shift phase by 0.5 to start at zero
-      f[i] = -1 + 2 * ((phase + 0.5) % 1)
+    ctx.stroke();
+  }
+
+  const samplerExample = new NullUnit(context)
+  await samplerExample.load('sampler')
+  console.log('unit loaded', samplerExample.info)
+  samplerExample.connect(context.destination)
+
+  const canvases = [...document.querySelectorAll('canvas')]
+  const oscope = canvases.pop()
+  for (const c in canvases) {
+    drawWave(canvases[c], await samplerExample.getSample(c))
+  }
+
+  const form = document.getElementById('ui')
+  const freq_out = document.getElementById('freq_output')
+  form.addEventListener('change', (e) => {
+    if (e.target.name === 'freq') {
+      samplerExample.setParam('pitch', form.freq.value)
     }
-  }
-  // copy the data into data[id]
-  data[w] = new Float32Array(f.subarray(0, 256))
-  draw_wav(w, f)
-}
-
-// load sampler at 440Hz, and it wil load #0 sample
-const sampler = await load_unit('sampler', [], data)
-
-// also not part of engine, just handles UI
-const form = document.getElementById('ui')
-const freq_out = document.getElementById('freq_output')
-form.addEventListener('change', (e) => {
-  if (e.target.name === 'freq') {
-    sampler.param_set(0, form.freq.value)
-  }
-  if (e.target.name === 'wave') {
-    sampler.param_set(1, form.wave.value)
-  }
-  freq_out.innerHTML = form.freq.value
-})
-
-// do 1 frame, manually
-for (let i=0;i<255;i++){
-  sampler.process(i, 0, 0)
-}
-
-
-
+    if (e.target.name === 'wave') {
+      samplerExample.setParam('sample ID', form.wave.value)
+    }
+    freq_out.innerHTML = form.freq.value
+  })
 
   </script>
 </html>
