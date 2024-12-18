@@ -1,21 +1,18 @@
 // this is a wrapper class for use in js
+
+// get location of other files based in this file's location
+function getFilePath() {
+  const u = import.meta.url.split('/')
+  u.pop()
+  return u.join('/')
+}
+
 export default class NullUnit {
   constructor(context){
     this.context = context
-    this.audioWorkletNode = new AudioWorkletNode(context, 'null-unit');
     this.messageMap = new Map();
     this.messageId = 0;
     this.info = {}
-
-    // setup async messaging
-    this.audioWorkletNode.port.onmessage = (event) => {
-      const { id, response } = event.data;
-      if (this.messageMap.has(id)) {
-        const { resolve } = this.messageMap.get(id);
-        resolve(response);
-        this.messageMap.delete(id);
-      }
-    };
   }
 
   // async send that can await return
@@ -29,8 +26,22 @@ export default class NullUnit {
 
   // load the wasm null-unit
   async load(name) {
-    // todo: this is a bit hardcoded to this filename
-    const bytes = await fetch(`${import.meta.url.replace(/NullUnit\.js$/, '')}/${name}.wasm`).then(r => r.arrayBuffer())
+    const dir = getFilePath()
+    console.log(dir)
+
+    await this.context.audioWorklet.addModule(`${dir}/unit-processor.js`)
+    this.audioWorkletNode = new AudioWorkletNode(this.context, 'null-unit');
+    // setup async messaging
+    this.audioWorkletNode.port.onmessage = (event) => {
+      const { id, response } = event.data;
+      if (this.messageMap.has(id)) {
+        const { resolve } = this.messageMap.get(id);
+        resolve(response);
+        this.messageMap.delete(id);
+      }
+    };
+
+    const bytes = await fetch(`${dir}/${name}.wasm`).then(r => r.arrayBuffer())
     this.info = await this.send({type: 'load', bytes})
   }
 

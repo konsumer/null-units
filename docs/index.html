@@ -15,9 +15,8 @@
 
   </head>
   <body>
-
     <p>
-    This loads a single sampler unit which has access to these waves:
+    Click to start. This loads a single sampler unit which has access to these waves:
     </p>
 
     <form id="ui">
@@ -47,10 +46,12 @@
     </label>
 
     <label>
-      <input type="range" min="0" max="12544" value="440" name="freq" id="freq" />
+      <input type="range" min="0" max="2000" value="440" name="freq" id="freq" />
       <div id="freq_output">440</div>
     </label>
 
+
+    <p>Currently this is just reference, since my nodes are not outputting anything:</p>
     <canvas id="oscope"></canvas>
 
     </form>
@@ -58,17 +59,7 @@
   </body>
   <script type="module">
   import NullUnit from './NullUnit.js'
-
-  // this is basic setup of the frame of things
-  const context = new AudioContext();
-  await context.audioWorklet.addModule(`${import.meta.url}/unit-processor.js`)
-
-  document.addEventListener('click', () => {
-    if (context.state === "suspended") {
-      context.resume()
-      console.log('resumed')
-    }
-  })
+  import Oscilloscope from './Oscilloscope.js'
 
   // this is UI stuff
   // get all samples from unit-worker and show them
@@ -106,28 +97,69 @@
     ctx.stroke();
   }
 
-  const samplerExample = new NullUnit(context)
-  await samplerExample.load('sampler')
-  console.log('unit loaded', samplerExample.info)
-  samplerExample.connect(context.destination)
+  // this is basic setup of the frame of things
 
-  const canvases = [...document.querySelectorAll('canvas')]
-  const oscope = canvases.pop()
-  for (const c in canvases) {
-    drawWave(canvases[c], await samplerExample.getSample(c))
+
+  async function oneTimeClick() {
+    document.removeEventListener('click', oneTimeClick)
+    const context = new AudioContext();
+    const samplerExample = new NullUnit(context)
+    await samplerExample.load('sampler')
+    console.log('unit loaded', samplerExample.info)
+    samplerExample.connect(context.destination)
+
+    const canvases = [...document.querySelectorAll('canvas')]
+    const oscope = canvases.pop()
+    for (const c in canvases) {
+      drawWave(canvases[c], await samplerExample.getSample(c))
+    }
+
+    const oscilloscope = new Oscilloscope(oscope);
+    // oscilloscope.init(context, samplerExample.audioWorkletNode)
+
+    // example that uses audio-api oscillator instead
+    const oscillator = context.createOscillator()
+    oscillator.type = "sine"
+    oscillator.frequency.setValueAtTime(440, context.currentTime)
+    // oscillator.connect(context.destination)
+    oscillator.start()
+    oscilloscope.init(context, oscillator)
+
+
+    const form = document.getElementById('ui')
+    const freq_out = document.getElementById('freq_output')
+    form.addEventListener('change', (e) => {
+      if (e.target.name === 'freq') {
+        samplerExample.setParam('pitch', form.freq.value)
+
+        if (typeof oscillator !== 'undefined') {
+          oscillator.frequency.setValueAtTime(form.freq.value, context.currentTime)
+        }
+      }
+      if (e.target.name === 'wave') {
+        samplerExample.setParam('sample ID', form.wave.value)
+
+        if (typeof oscillator !== 'undefined') {
+          if (form.wave.value == 0) {
+            oscillator.type = "sine"
+          }
+          if (form.wave.value == 1) {
+            oscillator.type = "square"
+          }
+          if (form.wave.value == 2) {
+            oscillator.type = "triangle"
+          }
+          if (form.wave.value == 3) {
+            oscillator.type = "sawtooth"
+          }
+          console.log(oscillator.type)
+        }
+      }
+      freq_out.innerHTML = form.freq.value
+    })
   }
 
-  const form = document.getElementById('ui')
-  const freq_out = document.getElementById('freq_output')
-  form.addEventListener('change', (e) => {
-    if (e.target.name === 'freq') {
-      samplerExample.setParam('pitch', form.freq.value)
-    }
-    if (e.target.name === 'wave') {
-      samplerExample.setParam('sample ID', form.wave.value)
-    }
-    freq_out.innerHTML = form.freq.value
-  })
+  document.addEventListener('click', oneTimeClick)
 
   </script>
 </html>
