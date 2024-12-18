@@ -5,8 +5,6 @@ const { TextDecoder  } = d
 
 const decoder = new TextDecoder()
 
-let printed = false
-
 class NullUnitProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
@@ -143,12 +141,9 @@ class NullUnitProcessor extends AudioWorkletProcessor {
     for (let channel = 0; channel < output.length; channel++) {
       const outputChannel = output[channel];
       for (let i = 0; i < outputChannel.length; i++) {
-        this.position = (this.position + 1) % 256;
-        outputChannel[i] = this.wasmInstance.process(this.position, 0, channel);
-        // if (!printed) console.log(i, outputChannel[i])
+        outputChannel[i] = this.wasmInstance.process(this.position++, 0, channel);
       }
     }
-    printed = true
     return true;
   }
 
