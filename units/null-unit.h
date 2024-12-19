@@ -1,9 +1,10 @@
 // use this header in all C null-units
 
+#include <stdint.h>
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -63,6 +64,16 @@ typedef struct {
   uint8_t paramCount;
   NullUnitParamInfo* params;
 } NullUnitnInfo;
+
+__attribute__((export_name("malloc")))
+void* _null_unit_malloc(size_t size) {
+  return malloc(size);
+}
+
+__attribute__((export_name("free")))
+void _null_unit_free(void* ptr) {
+  free(ptr);
+}
 
 // Get info about the unit
 __attribute__((export_name("get_info")))
@@ -130,4 +141,10 @@ void show_info() {
     param_string(info->params[i], p);
     printf("  %s\n", p);
   }
+}
+
+// midi note num to frequency
+float noteToFreq(int note) {
+    float a = 440; //frequency of A (coomon value is 440Hz)
+    return (a / 32) * pow(2, ((note - 9) / 12.0));
 }

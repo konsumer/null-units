@@ -2,94 +2,33 @@
   <head>
     <title>null-units</title>
     <link rel="icon" type="image/x-icon" href="https://avatars.githubusercontent.com/u/10213618" />
-    <style>
-    body {
-      font-family: sans-serif;
-    }
-    label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    label canvas {
-      width: 100px;
-    }
-    label > div {
-      width: 30px;
-    }
-    </style>
-
   </head>
   <body>
-    <p>
-    Click to start. This loads a single sampler unit which has access to these waves:
-    </p>
-
-    <form id="ui">
-      <h3>OSC</h3>
-
-      <label>
-        <input type="radio" name="wave" value="0" checked/>
-        <div>sin</div>
-        <canvas width="256" height="100"></canvas>
-      </label>
-
-      <label>
-        <input type="radio" name="wave" value="1"/>
-        <div>sqr</div>
-        <canvas width="256" height="100"></canvas>
-      </label>
-
-      <label>
-        <input type="radio" name="wave" value="2"/>
-        <div>tri</div>
-        <canvas width="256" height="100"></canvas>
-      </label>
-
-      <label>
-        <input type="radio" name="wave" value="3"/>
-        <div>saw</div>
-        <canvas width="256" height="100"></canvas>
-      </label>
-
-      <label>
-        <div>freq</div>
-        <input type="range" min="0" max="2000" value="440" name="freq" id="freq" />
-        <div id="freq_output">440</div>
-      </label>
-
-      <h3>LPF</h3>
-
-      <label>
-        <div>gain</div>
-        <input type="range" min="0" max="100" value="100" name="gain" id="gain" />
-        <div id="gain_output">100</div>
-      </label>
-
-      <label>
-        <div>cut</div>
-        <input type="range" min="0" max="2000" value="460" name="cutoff" id="cutoff" />
-        <div id="cutoff_output">460</div>
-      </label>
-
-      <label>
-        <div>reso</div>
-        <input type="range" min="0" max="100" value="100" name="reso" id="reso" />
-        <div id="reso_output">100</div>
-      </label>
-
-      <canvas id="oscope"></canvas>
-
-    </form>
-
+    <canvas id="oscope"></canvas>
   </body>
-  <script type="module">
+<script type="module">
+import NullUnitContext from './NullUnit.js'
 
-// test wasm-laoder
-import NullUnitWasm from './NullUnitWasm.js'
-const sampler = new NullUnitWasm()
-const info = await sampler.load(await fetch('wavetable.wasm').then(r => r.arrayBuffer()))
-console.log(info)
 
-  </script>
+// follows audio API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API
+
+const audioCtx = new NullUnitContext()
+
+const scope = audioCtx.createOscilloscope()
+scope.canvas = document.getElementById('oscope')
+scope.start()
+
+// const oscillator = audioCtx.createOscillator()
+// oscillator.type = "sine"
+// oscillator.frequency.setValueAtTime(100, audioCtx.currentTime)
+// oscillator.connect(audioCtx.destination)
+// oscillator.connect(scope.destination)
+// oscillator.start()
+
+const wavetable = await audioCtx.createUnit('units/wavetable.wasm')
+wavetable.connect(audioCtx.destination)
+wavetable.connect(scope.destination)
+wavetable.note.setValueAtTime(60, audioCtx.currentTime)
+
+</script>
 </html>

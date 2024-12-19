@@ -10,6 +10,10 @@ NullUnitnInfo unitInfo;
 // the number of params this can receive
 #define PARAM_COUNT 3
 
+#define SAMPLE_COUNT 256
+
+float sample[SAMPLE_COUNT] = {};
+
 // called when the unit is loaded, returns the number of params it accepts
 int main(int argc, char *argv[]) {
   NullUnitParamInfo* params = malloc(PARAM_COUNT * sizeof(NullUnitParamInfo));
@@ -26,6 +30,8 @@ int main(int argc, char *argv[]) {
   midi_float("volume", &unitInfo.params[1]);
   midi_float("type", &unitInfo.params[2]);
 
+
+
   return 0;
 }
 
@@ -34,7 +40,9 @@ void destroy() {}
 
 // process a single value, in a 0-255 position frame, return output
 float process(uint8_t position, float input, uint8_t channel) {
-  return input;
+  float scaledPos = (position * 4.0f * noteToFreq(unitInfo.params[0].value.i32)) / 440.0f;
+  unsigned int samplePos = (unsigned int)scaledPos % SAMPLE_COUNT;
+  return sample[samplePos];
 }
 
 // Get info about the unit
