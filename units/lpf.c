@@ -2,80 +2,53 @@
 
 #include "null-unit.h"
 
-#define PARAM_GAIN 0
-#define PARAM_CUTOFF 1
-#define PARAM_RESONANCE 2
-#define PARAM_LAST 2
-static unsigned int params[3];
+static NullUnitnInfo unitInfo;
 
-void init() {
-  // disable printf buffering
-  setvbuf(stdout, NULL, _IONBF, 0);
-}
+// the number of params this can receive
+#define PARAM_COUNT 1
 
-float lastOutput = 0.0f;
-float momentum = 0.0f;
+// called when the unit is loaded, returns the number of params it accepts
+int main(int argc, char *argv[]) {
+  NullUnitParamInfo* params = malloc(PARAM_COUNT * sizeof(NullUnitParamInfo));
 
-float doResonantLPF(float input, float cutoff, float resonance) {
-    // Convert cutoff frequency to coefficient (0 to 1)
-    float freq_coeff = 2.0f * sinf(M_PI * cutoff / SAMPLE_RATE);
-    if (freq_coeff > 0.99f) freq_coeff = 0.99f;
+  unitInfo = (NullUnitnInfo) {
+    .name= "lpf",
+    .channelsIn = 1,
+    .channelsOut = 1,
+    .paramCount = PARAM_COUNT,
+    .params = params
+  };
 
-    // Convert resonance from 0-100 to useful range (0 to ~0.99)
-    float res_coeff = resonance / 101.0f;
-
-    float distanceToGo = input - lastOutput;
-    momentum = momentum * res_coeff + distanceToGo * freq_coeff;
-    lastOutput += momentum + distanceToGo * freq_coeff;
-
-    return lastOutput;
-}
-
-float process(unsigned char position, float input, unsigned char channel) {
-  return doResonantLPF(input, (float)params[PARAM_CUTOFF], (float)params[PARAM_RESONANCE]) * ((float)params[PARAM_GAIN] / 100.0f);
-}
-
-// returns the name of the unit (32 characters, max)
-char* get_name_unit() {
-  return "lpf";
-}
-
-// get param count
-unsigned int get_param_count() {
-  return PARAM_LAST + 1;
-}
-
-// returns the name of the parameter (32 characters, max)
-char* get_name_param(unsigned int param) {
-  switch(param) {
-    case PARAM_GAIN: return "gain";
-    case PARAM_CUTOFF: return "cutoff";
-    case PARAM_RESONANCE: return "resonance";
-    default: return NULL;
-  }
-}
-
-// returns number of channels
-unsigned char get_channel_count() {
-  return 1;
+  midi_float("cutoff", &unitInfo.params[0]);
+  return 0;
 }
 
 // called when you plugin is unloaded
 void destroy() {}
 
+// process a single value, in a 0-255 position frame, return output
+float process(uint8_t position, float input, uint8_t channel) {
+  return input;
+}
+
+// Get info about the unit
+NullUnitnInfo* get_info() {
+  return &unitInfo;
+}
+
 // set a parameter
-void param_set(unsigned int param, unsigned int value) {
-  if (param > PARAM_LAST) {
+void param_set(uint8_t paramId, NullUnitParamValue* value) {
+  if (paramId>= PARAM_COUNT) {
     return;
   }
-  params[param] = value;
-  show_params(params);
+  unitInfo.params[paramId].value = *value;
+  show_info();
 }
 
 // get the current value of a parameter
-unsigned int param_get(unsigned int param) {
-  if (param > PARAM_LAST) {
-    return 0;
+NullUnitParamValue* param_get(uint8_t paramId) {
+  if (paramId>= PARAM_COUNT) {
+    return NULL;
   }
-  return params[param];
+  return &unitInfo.params[paramId].value;
 }

@@ -1,24 +1,30 @@
-// simple example with no params, that just copies input to output
-// think of this as a template
+// simple looping wavetable sampler null-unit
+// that can be used as a wave-table oscillator
+// eventually, I might embed wav-tables
+// but I am testing loading sample-data from host
 
 #include "null-unit.h"
 
-static NullUnitnInfo unitInfo;
+NullUnitnInfo unitInfo;
 
 // the number of params this can receive
-#define PARAM_COUNT 0
+#define PARAM_COUNT 3
 
 // called when the unit is loaded, returns the number of params it accepts
 int main(int argc, char *argv[]) {
   NullUnitParamInfo* params = malloc(PARAM_COUNT * sizeof(NullUnitParamInfo));
 
   unitInfo = (NullUnitnInfo) {
-    .name= "copy",
-    .channelsIn = 1,
+    .name= "wavetable",
+    .channelsIn = 0,
     .channelsOut = 1,
     .paramCount = PARAM_COUNT,
     .params = params
   };
+
+  midi_float("note", &unitInfo.params[0]);
+  midi_float("volume", &unitInfo.params[1]);
+  midi_float("type", &unitInfo.params[2]);
 
   return 0;
 }

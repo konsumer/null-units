@@ -84,110 +84,12 @@
 
   </body>
   <script type="module">
-  import NullUnit from './NullUnit.js'
-  import Oscilloscope from './Oscilloscope.js'
 
-  // this is UI stuff
-  // get all samples from unit-worker and show them
-  // send params when they change
-
-  function drawWave(canvas, data) {
-    if (!canvas?.getContext) {
-      return
-    }
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    const middleY = height / 2;
-    ctx.clearRect(0, 0, width, height);
-    ctx.beginPath();
-    ctx.strokeStyle = '#999';
-    ctx.lineWidth = 1;
-    ctx.moveTo(0, middleY);
-    ctx.lineTo(width, middleY);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeStyle = '#f00';
-    ctx.lineWidth = 2;
-    const yScale = height / 2;
-    for (let i = 0; i < data.length; i++) {
-      const x = i;
-      const y = middleY - (data[i] * yScale);
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
-    }
-    ctx.stroke();
-  }
-
-  // this is basic setup of the frame of things
-
-
-  async function oneTimeClick() {
-    document.removeEventListener('click', oneTimeClick)
-    const context = new AudioContext();
-
-    const samplerExample = new NullUnit(context)
-    await samplerExample.load('sampler')
-
-    const lpfExample = new NullUnit(context)
-    await lpfExample.load('lpf')
-
-
-    // [sampler] -> [lpf] -> [out]
-    samplerExample.connect(lpfExample.input)
-    lpfExample.connect(context.destination)
-
-    // set intial values
-    samplerExample.setParam('pitch', 440)
-    samplerExample.setParam('sample', 0)
-    lpfExample.setParam('gain', 100)
-    lpfExample.setParam('cutoff', 460)
-    lpfExample.setParam('resonance', 100)
-
-    const canvases = [...document.querySelectorAll('canvas')]
-    const oscope = canvases.pop()
-    for (const c in canvases) {
-      drawWave(canvases[c], await samplerExample.getSample(c))
-    }
-
-    const oscilloscope = new Oscilloscope(oscope);
-    oscilloscope.init(context, lpfExample.input)
-
-    const form = document.getElementById('ui')
-    const freq_out = document.getElementById('freq_output')
-    const gain_out = document.getElementById('gain_output')
-    const cutoff_out = document.getElementById('cutoff_output')
-    const reso_out = document.getElementById('reso_output')
-
-    form.addEventListener('change', (e) => {
-      if (e.target.name === 'gain') {
-        lpfExample.setParam('gain', form.gain.value)
-        gain_out.innerHTML = form.gain.value
-      }
-      if (e.target.name === 'cutoff') {
-        lpfExample.setParam('cutoff', form.cutoff.value)
-        cutoff_out.innerHTML = form.cutoff.value
-      }
-      if (e.target.name === 'reso') {
-        lpfExample.setParam('resonance', form.reso.value)
-        reso_out.innerHTML = form.reso.value
-      }
-
-      if (e.target.name === 'freq') {
-        samplerExample.setParam('pitch', form.freq.value)
-        freq_out.innerHTML = form.freq.value
-      }
-      if (e.target.name === 'wave') {
-        samplerExample.setParam('sample', form.wave.value)
-      }
-    })
-  }
-
-  document.addEventListener('click', oneTimeClick)
+// test wasm-laoder
+import NullUnitWasm from './NullUnitWasm.js'
+const sampler = new NullUnitWasm()
+const info = await sampler.load(await fetch('wavetable.wasm').then(r => r.arrayBuffer()))
+console.log(info)
 
   </script>
 </html>
