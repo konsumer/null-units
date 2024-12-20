@@ -49,6 +49,8 @@ async function oneTimeClick() {
   const pitchID = units.pitchNode()
   const wavetableID = await units.load("wavetable")
   const lpfID = await units.load("lpf")
+  const snareNoiseID =  await units.load("static")
+  const snareGainID =  await units.load("gain")
 
   // set initial settings
   units.set_param(wavescopeID, "lineColor", 'blue')
@@ -59,24 +61,30 @@ async function oneTimeClick() {
   // for UI: set nicer names
   units.set_title(wavetableID, 'WASM: Wave Table')
   units.set_title(lpfID, 'WASM: Lowpass Filter')
-  units.set_title(scopeID, 'Sound (from lowpass/audio)')
+  units.set_title(scopeID, 'Output')
   units.set_title(wavescopeID, 'Wave Table Output')
+  units.set_title(snareGainID, 'Static Gain (for snare-like sound)')
 
   // make UI
   document.body.appendChild(units.genui(wavetableID))
   document.body.appendChild(units.genui(wavescopeID))
+  document.body.appendChild(units.genui(pitchID))
   document.body.appendChild(units.genui(lpfID))
   document.body.appendChild(units.genui(scopeID))
-  document.body.appendChild(units.genui(pitchID))
+  document.body.appendChild(units.genui(snareGainID))
 
   // connect things
   units.connect(wavetableID, 0, lpfID, 0)
   units.connect(wavetableID, 0, wavescopeID, 0)
+  units.connect(wavetableID, 0, pitchID, 0)
   units.connect(lpfID, 0, scopeID, 0)
-  units.connect(lpfID, 0, pitchID, 0)
   units.connect(lpfID, 0, outID, 0)
 
+  units.connect(snareNoiseID, 0, snareGainID, 0)
+  units.connect(snareGainID, 0, lpfID, 0)
+
   let demoSong = true
+  let snareOn = false
 
   document.getElementById('playdemo').addEventListener('change', e => {
     demoSong = e.target.checked
@@ -91,6 +99,8 @@ async function oneTimeClick() {
   setInterval(() => {
     if (demoSong){
       units.set_param(wavetableID, "type", (Math.random() * 3))
+      snareOn = !snareOn
+      units.set_param(snareGainID, "gain", snareOn ? 64 : 0)
     }
   }, 250)
 }
