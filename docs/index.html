@@ -43,7 +43,9 @@ async function oneTimeClick() {
 
   const units = new NullManager()
 
-  const outID = 0
+  const audioOutID = 0
+
+  const outID = await units.load("gain")
   const scopeID = units.scopeNode()
   const wavescopeID = units.scopeNode()
   const pitchID = units.pitchNode()
@@ -51,12 +53,19 @@ async function oneTimeClick() {
   const lpfID = await units.load("lpf")
   const snareNoiseID =  await units.load("static")
   const snareGainID =  await units.load("gain")
+  const kickGainID =  await units.load("gain")
+  const kickBassID = await units.load("wavetable")
+  const drumscopeID = units.scopeNode()
 
   // set initial settings
   units.set_param(wavescopeID, "lineColor", 'blue')
-  units.set_param(wavetableID, "type", 0) // sine
+  units.set_param(scopeID, "lineColor", 'green')
+  units.set_param(wavetableID, "type", 2) // tri
   units.set_param(wavetableID, "note", 60) // middle-C
   units.set_param(lpfID, "cutoff", 22)
+  units.set_param(kickBassID, "type", 0) // sine
+  units.set_param(kickBassID, "note", 18) // low note
+  units.set_param(outID, "gain", 20) // it's too loud!
 
   // for UI: set nicer names
   units.set_title(wavetableID, 'WASM: Wave Table')
@@ -64,27 +73,46 @@ async function oneTimeClick() {
   units.set_title(scopeID, 'Output')
   units.set_title(wavescopeID, 'Wave Table Output')
   units.set_title(snareGainID, 'Static Gain (for snare-like sound)')
+  units.set_title(kickBassID, 'Bass (for kick')
+  units.set_title(kickGainID, 'Bass Gain (for kick)')
+  units.set_title(drumscopeID, "Drums & Bass?")
+  units.set_title(outID, "Main Gain")
+
 
   // make UI
   document.body.appendChild(units.genui(wavetableID))
   document.body.appendChild(units.genui(wavescopeID))
   document.body.appendChild(units.genui(pitchID))
-  document.body.appendChild(units.genui(lpfID))
-  document.body.appendChild(units.genui(scopeID))
   document.body.appendChild(units.genui(snareGainID))
+  document.body.appendChild(units.genui(kickBassID))
+  document.body.appendChild(units.genui(kickGainID))
+  document.body.appendChild(units.genui(drumscopeID))
+  document.body.appendChild(units.genui(lpfID))
+  document.body.appendChild(units.genui(outID))
+  document.body.appendChild(units.genui(scopeID))
 
   // connect things
   units.connect(wavetableID, 0, lpfID, 0)
   units.connect(wavetableID, 0, wavescopeID, 0)
   units.connect(wavetableID, 0, pitchID, 0)
-  units.connect(lpfID, 0, scopeID, 0)
   units.connect(lpfID, 0, outID, 0)
+  units.connect(outID, 0, scopeID, 0)
 
   units.connect(snareNoiseID, 0, snareGainID, 0)
   units.connect(snareGainID, 0, lpfID, 0)
+  units.connect(snareGainID, 0, drumscopeID, 0)
+
+  units.connect(kickBassID, 0, kickGainID, 0)
+  units.connect(kickGainID, 0, lpfID, 0)
+  units.connect(kickGainID, 0, drumscopeID, 0)
+
+   units.connect(outID, 0, audioOutID, 0)
+
+  // stuff for demo
 
   let demoSong = true
   let snareOn = false
+  let kickOn = false
 
   document.getElementById('playdemo').addEventListener('change', e => {
     demoSong = e.target.checked
@@ -93,14 +121,33 @@ async function oneTimeClick() {
   // random notes/types
   setInterval(() => {
     if (demoSong){
-      units.set_param(wavetableID, "note", getRandomPersianNote(36, 1))
+      units.set_param(wavetableID, "note", getRandomPersianNote(48, 1))
     }
   }, 1000)
+
+  let i = 0
+
+  setInterval(() => {
+    kickOn = !kickOn
+    snareOn = false
+    i++
+    if (i % 5 === 0) {
+      snareOn = true
+    }
+  }, 100)
+
   setInterval(() => {
     if (demoSong){
       units.set_param(wavetableID, "type", (Math.random() * 3))
-      snareOn = !snareOn
       units.set_param(snareGainID, "gain", snareOn ? 64 : 0)
+      units.set_param(kickGainID, "gain", kickOn ? 64 : 0)
+
+      // this makes a rudimentary kind of kick + bass
+      units.set_param(kickBassID, "type", 1)
+      setTimeout(() => {
+        units.set_param(kickBassID, "note", getRandomPersianNote(12, 1))
+        units.set_param(kickBassID, "type", 0)
+      }, 125)
     }
   }, 250)
 }
