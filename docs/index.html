@@ -39,7 +39,7 @@ function getRandomPersianNote(baseNote=60, octaveRange = 2) {
 // click to play
 async function oneTimeClick() {
   document.removeEventListener('click', oneTimeClick)
-  document.body.innerHTML = ''
+  document.body.innerHTML = 'Play Demo Song? <input type="checkbox" checked id="playdemo" /><br/><br/>'
 
   const units = new NullManager()
 
@@ -76,12 +76,22 @@ async function oneTimeClick() {
   units.connect(lpfID, 0, pitchID, 0)
   units.connect(lpfID, 0, outID, 0)
 
+  let demoSong = true
+
+  document.getElementById('playdemo').addEventListener('change', e => {
+    demoSong = e.target.checked
+  })
+
   // random notes/types
   setInterval(() => {
-    units.set_param(wavetableID, "note", getRandomPersianNote(36, 1))
+    if (demoSong){
+      units.set_param(wavetableID, "note", getRandomPersianNote(36, 1))
+    }
   }, 1000)
   setInterval(() => {
-    units.set_param(wavetableID, "type", (Math.random() * 3))
+    if (demoSong){
+      units.set_param(wavetableID, "type", (Math.random() * 3))
+    }
   }, 250)
 }
 
