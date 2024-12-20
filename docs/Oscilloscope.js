@@ -1,7 +1,5 @@
-// this represets a single instance of the wasm unit
-
-// this acts like an audio-context, but with a scope to look at
-export class Oscilloscope {
+// this is a pseudo-unit that makes an aoscilloscope
+export default class Oscilloscope {
   constructor(audioContext) {
     this.audioContext = audioContext
     this.canvas = null
@@ -93,57 +91,5 @@ export class Oscilloscope {
     }
 
     ctx.stroke()
-  }
-}
-
-export let dir = import.meta.url.split('/').slice(0, -1).join('/')
-
-// extend AudioContext to add NullUnit stuff
-export default class NullUnitContext extends AudioContext {
-  createOscilloscope() {
-    return new Oscilloscope(this)
-  }
-
-  async createUnit(url) {
-    const bytes = await fetch(url).then(r => r.arrayBuffer())
-    await this.audioWorklet.addModule(`${dir}/unit-processor.js`)
-    const unit = new AudioWorkletNode(this, 'null-unit')
-    let info = {}
-    let paramNames = []
-
-    // wait for initial info
-    await new Promise((resolve, reject) => {
-      unit.port.onmessage = ({ data: { type, ...args  }  }) => {
-        if (type === 'info') {
-          info = args.info
-          paramNames = info.params.map(p => p.name)
-          resolve()
-        }
-      }
-      unit.port.postMessage({ type: 'load', bytes })
-    })
-
-    const handler = {
-      get(...a) {
-        if (a[1] === 'connect') {
-          return outNode => unit.connect(outNode)
-        }
-        const i = paramNames.indexOf(a[1])
-        if (i > -1) {
-          const param = info.params[i]
-          return {
-            setValueAtTime(value, time) {
-              setTimeout(() => unit.port.postMessage({ type: 'param_set', paramID: i, value }), time / 1000)
-            },
-
-            // this is just the initial value
-            // but I could periodically update to grab it
-            value: param.value
-          }
-        }
-        return Reflect.get(...a)
-      }
-    }
-    return new Proxy({}, handler)
   }
 }

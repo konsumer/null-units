@@ -6,6 +6,7 @@ static NullUnitnInfo unitInfo;
 
 // the number of params this can receive
 #define PARAM_COUNT 1
+#define PARAM_CUTOFF 0
 
 // called when the unit is loaded, returns the number of params it accepts
 int main(int argc, char *argv[]) {
@@ -19,7 +20,7 @@ int main(int argc, char *argv[]) {
     .params = params
   };
 
-  midi_float("cutoff", &unitInfo.params[0]);
+  gen_midi_float("cutoff", &unitInfo.params[PARAM_CUTOFF]);
   return 0;
 }
 
@@ -28,6 +29,8 @@ void destroy() {}
 
 // process a single value, in a 0-255 position frame, return output
 float process(uint8_t position, float input, uint8_t channel) {
+  float cutoff =  unitInfo.params[PARAM_CUTOFF].value.f;
+
   return input;
 }
 
@@ -42,7 +45,7 @@ void param_set(uint8_t paramId, NullUnitParamValue* value) {
     return;
   }
   unitInfo.params[paramId].value = *value;
-  show_info();
+  // show_info();
 }
 
 // get the current value of a parameter

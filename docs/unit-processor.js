@@ -1,223 +1,175 @@
 import EasyWasiLite from './EasywasiLite.js'
 
-const getParamVal = (type, paramView, offset=0) => {
-  switch (type) {
-    case 0: // NULL_PARAM_BOOL
-      return Boolean(paramView.getInt8(offset));
-
-    case 1: // NULL_PARAM_U8
-      return paramView.getUint8(offset);
-
-    case 2: // NULL_PARAM_I8
-      return paramView.getInt8(offset);
-
-    case 3: // NULL_PARAM_U16
-      return paramView.getUint16(offset, true);
-
-    case 4: // NULL_PARAM_I16
-      return paramView.getInt16(offset, true);
-
-    case 5: // NULL_PARAM_U32
-      return paramView.getUint32(offset, true);
-
-    case 6: // NULL_PARAM_I32
-      return paramView.getInt32(offset, true);
-
-    case 7: // NULL_PARAM_F32
-      return paramView.getFloat32(offset, true);
-
-    case 8: // NULL_PARAM_U64
-      return Number(paramView.getBigUint64(offset, true));
-
-    case 9: // NULL_PARAM_I64
-      return Number(paramView.getBigInt64(offset, true));
-
-    case 10: // NULL_PARAM_F64
-      return paramView.getFloat64(offset, true);
-    default:
-      console.warn(`Unknown parameter type: ${type}`);
-      return null;
-  }
-};
-
-const setParamVal = (type, value, paramView, offset = 0) => {
-  switch (type) {
-    case 0: // NULL_PARAM_BOOL
-      return paramView.setInt8(offset, value ? 0 : 1);
-
-    case 1: // NULL_PARAM_U8
-      return paramView.setUint8(offset, value);
-
-    case 2: // NULL_PARAM_I8
-      return paramView.setInt8(offset, value);
-
-    case 3: // NULL_PARAM_U16
-      return paramView.setUint16(offset, value, true);
-
-    case 4: // NULL_PARAM_I16
-      return paramView.setInt16(offset, value, true);
-
-    case 5: // NULL_PARAM_U32
-      return paramView.setUint32(offset, value, true);
-
-    case 6: // NULL_PARAM_I32
-      return paramView.setInt32(offset, value, true);
-
-    case 7: // NULL_PARAM_F32
-      return paramView.setFloat32(offset, value, true);
-
-    case 8: // NULL_PARAM_U64
-      return paramView.setBigUint64(offset, BigInt(value), true);
-
-    case 9: // NULL_PARAM_I64
-      return Number(paramView.setBigInt64(offset, BigInt(value), true));
-
-    case 10: // NULL_PARAM_F64
-      return paramView.setFloat64(offset, value, true);
-    default:
-      console.warn(`Unknown parameter type: ${type}`);
-      return null;
-  }
-}
-
-// this manages the actual wasm for a unit
-// and will be loaded inside audio-worklet
-export class NullUnitWasm {
-  constructor() {
-    // this holds samples and things]
-    this.data = {}
-
-    // this will have info about the unit, ater you run load()
-    this.info = {}
-  }
-
-  // load the wasm
-  async load(wasmBytes) {
-    // this is host-functions exposed to the unit-wasm
-    const wasi_snapshot_preview1 = new EasyWasiLite()
-
-    const importObject = {
-      env: {
-        trace(msgPtr) {
-          console.log(this.getString(msgPtr))
-        },
-
-        get_data_floats(id, offset, length, out) {
-          const mem = new Uint8Array(this.wasm.memory.buffer)
-          mem.set(new Uint8Array(this.data[id].buffer.slice(offset, offset + length * 4)), out)
-        }
-      },
-      wasi_snapshot_preview1
-    }
-
-    // bind imports to this
-    for (const m of Object.keys(importObject)) {
-      for (const f of Object.keys(importObject[m])) {
-        if (typeof importObject[m][f] === 'function') {
-          importObject[m][f] = importObject[m][f].bind(this)
-        }
-      }
-    }
-
-    // load wasm
-    this.wasm = (await WebAssembly.instantiate(wasmBytes, importObject)).instance.exports
-    wasi_snapshot_preview1.start(this.wasm)
-    this.wasi_snapshot_preview1 = wasi_snapshot_preview1
-
-    // this is reused to set param-values
-    this.paramPtr = this.wasm.malloc(8)
-    this.paramReturnView = new DataView(this.wasm.memory.buffer, this.paramPtr, 8);
-
-    return this.update_info()
-  }
-
-  // get info about unit
-  update_info() {
-    if (!this?.wasm?.get_info) {
-      return undefined;
-    }
-    const ptr = this.wasm.get_info();
-    const info = new DataView(this.wasm.memory.buffer.slice(ptr, ptr+12))
-    const out = {
-      name: this.wasi_snapshot_preview1.readString(info.getUint32(0, true)),
-      channelsIn: info.getUint8(4),
-      channelsOut: info.getUint8(5),
-      params: []
-    }
-    const paramCount = info.getUint8(6)
-    const paramsPtr = info.getUint32(8, true)
-
-    for (let i = 0; i < paramCount; i++) {
-      const paramPtr = paramsPtr + (i * 40);
-      const paramView = new DataView(this.wasm.memory.buffer, paramPtr, 40);
-      const type = paramView.getInt32(0, true)
-      out.params.push({
-        type,
-        min: getParamVal(type, paramView, 8),
-        max: getParamVal(type, paramView, 16),
-        value: getParamVal(type, paramView, 24),
-        name: this.wasi_snapshot_preview1.readString(paramView.getUint32(32, true))
-      })
-    }
-    this.info = out
-    return out
-  }
-
-  param_set(paramID, value) {
-    setParamVal(this.info.params[paramID].type, value, this.paramReturnView)
-  }
-
-  param_get(paramID) {
-    return getParamVal(this.info.params[paramID].type, this.paramReturnView)
-  }
-
-  process(position, input, channel) {
-    return this.wasm.process(position, input, channel)
-  }
-}
-
 class NullUnitProcessor extends AudioWorkletProcessor {
   constructor() {
-    // TODO: handle these from wasm
-    super({numberOfInputs: 1, numberOfOutputs: 1})
+    // max-number of inputs/outputs
+    super({ numberOfInputs: 8, numberOfOutputs: 8 })
 
     this.position = 0
+    this.unitID = 0
+    this.info = {}
+    this.data = {}
 
     this.port.onmessage = async ({ data: { type, ...args} }) => {
       switch (type) {
+        // load a wasm-unit
         case 'load':
-          this.unit = new NullUnitWasm()
-          this.info = await this.unit.load(args.bytes)
-          this.port.postMessage({ type: 'info', info: this.info })
+          this.unitID = args.id
+          const info = await this.loadWasm(args.bytes)
+
+          // this is used to pas params to wasm
+          this.paramPtr = this.wasm.malloc(4)
+
+          this.info = info
+          this.port.postMessage({ type: 'info', id: args.id, info })
           break
+
+        // set a sample, by id number
+        case 'set_data':
+          break
+
+        // set a param
         case 'param_set':
-          if (this.unit) {
-            this.unit.param_set(args.paramID, args.value)
-          }
+          const {id, paramID, value} = args
+          const param = this.info.params[paramID]
+          const view = new DataView(this.wasm.memory.buffer)
+          view.setUint32(this.paramPtr, this.setParamValue(value, param.type), true)
+          this.wasm.param_set(paramID, this.paramPtr )
+          this.info.params[paramID].value = value
           break
+
+        // get a a param
         case 'param_get':
-          if (this.unit) {
-            this.port.postMessage({ type: 'param_get', value: this.unit.param_get(args.paramID), paramID: args.paramID })
-          }
           break
       }
     }
   }
 
-  process(inputs, outputs, parameters) {
-    if (this?.unit?.process) {
-      const output = outputs[0]
-      const input = inputs[0]
-      for (let channel = 0; channel < output.length; channel++) {
-        const outputChannel = output[channel]
-        const inputChannel = input[channel] || []
-        for (let i = 0; i < outputChannel.length; i++) {
-          outputChannel[i] = this.unit.process(this.position++, inputChannel[i] || 0, channel)
-        }
+  // this will setup wasm unit & return info
+  async loadWasm(bytes) {
+    const wasi_snapshot_preview1 = new EasyWasiLite()
+    const importObject = {
+      wasi_snapshot_preview1,
+      env: {
+        trace(msgPtr) {
+          console.log(this.wasi.getString(msgPtr))
+        },
+
+        get_data_floats(id, offset, length, out) {
+          if (!this.data[id]?.buffer) {
+            return
+          }
+          const mem = new Uint8Array(this.wasm.memory.buffer)
+          mem.set(new Uint8Array(this.data[id].buffer.slice(offset, offset + (length * 4))), out)
+        },
       }
     }
+    this.wasm = (await WebAssembly.instantiate(bytes, importObject)).instance.exports
+    wasi_snapshot_preview1.start(this.wasm)
+    this.wasi = wasi_snapshot_preview1
+    return this.getInfo()
+  }
+
+  setParamValue(value, type) {
+    const view = new DataView(new ArrayBuffer(4))
+    switch (type) {
+      case 0: // NULL_PARAM_BOOL
+        return Number(Boolean(value))
+      case 1: // NULL_PARAM_U32
+        return value >>> 0
+      case 2: // NULL_PARAM_I32
+        view.setInt32(0, value, true)
+        return view.getUint32(0, true)
+      case 3: // NULL_PARAM_F32
+        view.setFloat32(0, value, true)
+        return view.getUint32(0, true)
+      default:
+        throw new Error(`Unknown parameter type: ${type}`)
+    }
+  }
+
+  // Helper function to interpret the param-value based on type
+  getParamValue(rawValue, type) {
+    const view = new DataView(new ArrayBuffer(4))
+    view.setUint32(0, rawValue, true)
+    switch (type) {
+      case 0: // NULL_PARAM_BOOL
+        return Boolean(rawValue)
+      case 1: // NULL_PARAM_U32
+        return rawValue
+      case 2: // NULL_PARAM_I32
+        return view.getInt32(0, true)
+      case 3: // NULL_PARAM_F32
+        return view.getFloat32(0, true)
+      default:
+        throw new Error(`Unknown parameter type: ${type}`)
+    }
+  }
+
+  // interrrogate unit for info, parse struct into JS object
+  getInfo() {
+    const info = {}
+    const p = this.wasm.get_info()
+    const iview = new DataView(this.wasm.memory.buffer.slice(p, p + 12))
+
+    info.name = this.wasi.readString(iview.getUint32(0, true))
+    info.channelsIn = iview.getUint8(4, true)
+    info.channelsOut = iview.getUint8(5, true)
+    const paramCount =  iview.getUint8(6, true)
+    const paramsPtr = iview.getUint32(8, true)
+
+    info.params = []
+    for (let i = 0; i < paramCount; i++) {
+      const paramOffset = paramsPtr + (i * 20)
+      const paramView = new DataView(this.wasm.memory.buffer.slice(paramOffset, paramOffset + 20))
+      const param = {
+        type: paramView.getUint32(0, true),
+        min: this.getParamValue(paramView.getUint32(4, true), paramView.getUint32(0, true)),
+        max: this.getParamValue(paramView.getUint32(8, true), paramView.getUint32(0, true)),
+        value: this.getParamValue(paramView.getUint32(12, true), paramView.getUint32(0, true)),
+        name: this.wasi.readString(paramView.getUint32(16, true))
+      }
+      info.params.push(param)
+    }
+
+    return info
+  }
+
+  process(inputs, outputs) {
     return true
   }
 }
+
+/*
+struct NullUnitnInfo (12) {
+  char* name; // 4
+  uint8_t channelsIn; // 1
+  uint8_t channelsOut; // 1
+  uint8_t paramCount; // 1
+  // pad 1, for alignment
+  NullUnitParamInfo* params; // 4
+};
+
+struct NullUnitParamInfo (20) {
+  NullUnitParamType type; // 4
+  NullUnitParamValue min; // 4
+  NullUnitParamValue max; // 4
+  NullUnitParamValue value; // 4
+  char* name; // 4
+};
+
+enum NullUnitParamType (32) {
+  NULL_PARAM_BOOL,  // stored as uint32_t
+  NULL_PARAM_U32,
+  NULL_PARAM_I32,
+  NULL_PARAM_F32
+};
+
+union NullUnitParamValue (32) {
+  uint32_t u;
+  int32_t i;
+  float f;
+};
+*/
 
 registerProcessor("null-unit", NullUnitProcessor);

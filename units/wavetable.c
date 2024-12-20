@@ -1,4 +1,4 @@
-// simple looping wavetable sampler null-unit
+// simple looping sampler null-unit
 // that can be used as a wave-table oscillator
 // eventually, I might embed wav-tables
 // but I am testing loading sample-data from host
@@ -9,6 +9,9 @@ NullUnitnInfo unitInfo;
 
 // the number of params this can receive
 #define PARAM_COUNT 3
+
+#define PARAM_TYPE 0
+#define PARAM_NOTE 1
 
 #define SAMPLE_COUNT 256
 
@@ -26,11 +29,9 @@ int main(int argc, char *argv[]) {
     .params = params
   };
 
-  midi_float("note", &unitInfo.params[0]);
-  midi_float("volume", &unitInfo.params[1]);
-  midi_float("type", &unitInfo.params[2]);
-
-
+  gen_midi_unsigned("type", &unitInfo.params[PARAM_TYPE]); // u32 0-3 wave-type: sin/sqr/tri/saw
+  gen_midi_float("note", &unitInfo.params[PARAM_NOTE]); // f32 0-127 midi frequency
+  unitInfo.params[PARAM_TYPE].max.u = 3; // (0-3)
 
   return 0;
 }
@@ -40,7 +41,9 @@ void destroy() {}
 
 // process a single value, in a 0-255 position frame, return output
 float process(uint8_t position, float input, uint8_t channel) {
-  float scaledPos = (position * 4.0f * noteToFreq(unitInfo.params[0].value.i32)) / 440.0f;
+  float freq = noteToFreq(unitInfo.params[PARAM_NOTE].value.f);
+
+  float scaledPos = (position * 4.0f * freq) / 440.0f;
   unsigned int samplePos = (unsigned int)scaledPos % SAMPLE_COUNT;
   return sample[samplePos];
 }
@@ -55,8 +58,14 @@ void param_set(uint8_t paramId, NullUnitParamValue* value) {
   if (paramId>= PARAM_COUNT) {
     return;
   }
+
+  // change sample
+  if (paramId == PARAM_TYPE && value->u != unitInfo.params[PARAM_TYPE].value.u) {
+
+  }
+
   unitInfo.params[paramId].value = *value;
-  show_info();
+  // show_info();
 }
 
 // get the current value of a parameter

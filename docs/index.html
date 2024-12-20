@@ -2,33 +2,94 @@
   <head>
     <title>null-units</title>
     <link rel="icon" type="image/x-icon" href="https://avatars.githubusercontent.com/u/10213618" />
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+    </style>
   </head>
   <body>
-    <canvas id="oscope"></canvas>
+    <p>Click to start</p>
   </body>
 <script type="module">
-import NullUnitContext from './NullUnit.js'
+import NullManager from './null-manager.js'
+import waveGenerator from './wave-generator.js'
 
+// I just like the Persian-scale
+function getRandomPersianNote(baseNote=60, octaveRange = 2) {
+    const persianScale = [0, 1, 4, 5, 6, 8, 11];
 
-// follows audio API: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Using_Web_Audio_API
+    // Create an expanded scale across multiple octaves
+    const expandedScale = [];
+    for (let octave = 0; octave < octaveRange; octave++) {
+        persianScale.forEach(interval => {
+            expandedScale.push(interval + (octave * 12));
+        });
+    }
 
-const audioCtx = new NullUnitContext()
+    const randomIndex = Math.floor(Math.random() * expandedScale.length);
+    return baseNote + expandedScale[randomIndex];
+}
 
-const scope = audioCtx.createOscilloscope()
-scope.canvas = document.getElementById('oscope')
-scope.start()
+// click to play
+async function oneTimeClick() {
+  document.removeEventListener('click', oneTimeClick)
+  document.body.innerHTML = ''
 
-// const oscillator = audioCtx.createOscillator()
-// oscillator.type = "sine"
-// oscillator.frequency.setValueAtTime(100, audioCtx.currentTime)
-// oscillator.connect(audioCtx.destination)
-// oscillator.connect(scope.destination)
-// oscillator.start()
+  const units = new NullManager()
 
-const wavetable = await audioCtx.createUnit('units/wavetable.wasm')
-wavetable.connect(audioCtx.destination)
-wavetable.connect(scope.destination)
-wavetable.note.setValueAtTime(60, audioCtx.currentTime)
+  const outID = 0
+  const scopeID = units.scopeNode()
+  const pitchID = units.pitchNode()
 
+  // customize look
+  units.set_param(scopeID, "width", 200)
+  units.set_param(scopeID, "height", 100)
+  units.set_param(scopeID, "backgroundColor", '#000000')
+  units.set_param(scopeID, "lineColor", '#ff0000')
+  units.set_param(scopeID, "zeroColor", '#ffffff')
+  units.set_param(scopeID, "lineWidth", 2)
+
+  /*
+  const testID = units.oscNode()
+  // test -> out
+  // test -> scope
+  units.connect(testID, 0, outID, 0)
+  units.connect(testID, 0, scopeID, 0)
+  units.connect(testID, 0, pitchID, 0)
+
+  // random notes/types
+  setInterval(() => {
+    units.set_param(testID, "note", getRandomPersianNote(36, 1))
+  }, 1000)
+  setInterval(() => {
+    units.set_param(testID, "type", (Math.random() * 3))
+  }, 100)
+  */
+
+  const wavetableID = await units.load("wavetable")
+  const lpfID = await units.load("lpf")
+
+  document.body.appendChild(units.genui(wavetableID))
+  document.body.appendChild(units.genui(lpfID))
+  document.body.appendChild(units.genui(scopeID))
+
+  // set initial settings
+  units.set_param(wavetableID, "type", 0) // sine
+  units.set_param(wavetableID, "note", 60) // middle-C
+  units.set_param(lpfID, "cutoff", 62) // middle D
+
+  // wavetable -> lpf -> out
+  // lpf -> scope
+  // wavetable -> pitch
+  units.connect(wavetableID, 0, lpfID, 0)
+  units.connect(wavetableID, 0, pitchID, 0)
+  units.connect(lpfID, 0, outID, 0)
+  units.connect(lpfID, 0, scopeID, 0)
+
+}
+
+// click to play
+document.addEventListener('click', oneTimeClick)
 </script>
 </html>
