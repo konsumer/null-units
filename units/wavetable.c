@@ -14,6 +14,7 @@ NullUnitnInfo unitInfo;
 #define PARAM_NOTE 1
 
 #define SAMPLE_COUNT 256
+#define FRAME_SIZE 256.0f
 
 float sample[SAMPLE_COUNT] = {};
 
@@ -43,12 +44,16 @@ int main(int argc, char *argv[]) {
 void destroy() {}
 
 // process a single value, in a 0-255 position frame, return output
-float process(uint8_t position, float input, uint8_t channel) {
-  float freq = noteToFreq(unitInfo.params[PARAM_NOTE].value.f);
+float process(uint8_t position, float input, uint8_t channel, float sampleRate) {
+    float freq = noteToFreq(unitInfo.params[PARAM_NOTE].value.f);
 
-  float scaledPos = (position * 4.0f * freq) / 440.0f;
-  unsigned int samplePos = (unsigned int)scaledPos % SAMPLE_COUNT;
-  return sample[samplePos];
+    // Calculate how many cycles should occur in one frame
+    float cyclesPerFrame = (freq * FRAME_SIZE) / sampleRate;
+
+    float scaledPos = (position * cyclesPerFrame);
+
+    unsigned int samplePos = (unsigned int)scaledPos % SAMPLE_COUNT;
+    return sample[samplePos];
 }
 
 // Get info about the unit

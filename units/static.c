@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 void destroy() {}
 
 // process a single value, in a 0-255 position frame, return output
-float process(uint8_t position, float input, uint8_t channel) {
+float process(uint8_t position, float input, uint8_t channel, float sampleRate) {
   return (((float)rand() / (float)RAND_MAX) * 2.0f) - 1.0f;
 }
 

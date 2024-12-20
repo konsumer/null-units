@@ -7,8 +7,8 @@
 #include <stdbool.h>
 #include <string.h>
 
-#ifndef SAMPLE_RATE
-#define SAMPLE_RATE 48000.0f
+#ifndef TWO_PI
+#define TWO_PI 6.283185307179586f
 #endif
 
 // these are exposed from host
@@ -60,7 +60,7 @@ __attribute__((export_name("get_info")))
 NullUnitnInfo* get_info();
 
 __attribute__((export_name("process")))
-float process(uint8_t position, float input, uint8_t channel);
+float process(uint8_t position, float input, uint8_t channel, float sampleRate);
 
 __attribute__((export_name("destroy")))
 void destroy();
