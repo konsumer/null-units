@@ -2,9 +2,49 @@
 // but has no actual file-access and doesn't use TextEncoder/TextDecoder
 // it is designed for use in constrained runtime environments (AudioWorklets, etc)
 
-import * as defs from './defs.js'
-
-export { defs }
+const defs = {
+  "CLOCKID_MONOTONIC": 1,
+  "CLOCKID_REALTIME": 0,
+  "ERRNO_ACCES": 2,
+  "ERRNO_BADF": 8,
+  "ERRNO_INVAL": 28,
+  "ERRNO_IO": 29,
+  "ERRNO_NAMETOOLONG": 37,
+  "ERRNO_NOENT": 44,
+  "ERRNO_NOSYS": 52,
+  "ERRNO_NOTDIR": 54,
+  "ERRNO_NOTSUP": 58,
+  "ERRNO_OVERFLOW": 61,
+  "ERRNO_SPIPE": 70,
+  "ERRNO_SUCCESS": 0,
+  "EVENTRWFLAGS_FD_READWRITE_HANGUP": 1,
+  "FDFLAGS_APPEND": 1,
+  "FDFLAGS_DSYNC": 2,
+  "FDFLAGS_NONBLOCK": 4,
+  "FDFLAGS_RSYNC": 8,
+  "FDFLAGS_SYNC": 16,
+  "FILETYPE_BLOCK_DEVICE": 1,
+  "FILETYPE_CHARACTER_DEVICE": 2,
+  "FILETYPE_DIRECTORY": 3,
+  "FILETYPE_REGULAR_FILE": 4,
+  "FILETYPE_SOCKET_STREAM": 6,
+  "FILETYPE_SYMBOLIC_LINK": 7,
+  "FILETYPE_UNKNOWN": 0,
+  "PREOPENTYPE_DIR": 0,
+  "RIGHTS_FD_FILESTAT_GET": 2097152,
+  "RIGHTS_FD_READ": 2,
+  "RIGHTS_FD_READDIR": 16384,
+  "RIGHTS_FD_SEEK": 4,
+  "RIGHTS_FD_TELL": 32,
+  "RIGHTS_FD_WRITE": 64,
+  "RIGHTS_PATH_CREATE_DIRECTORY": 512,
+  "RIGHTS_PATH_OPEN": 8192,
+  "RIGHTS_PATH_REMOVE_DIRECTORY": 33554432,
+  "RIGHTS_PATH_UNLINK_FILE": 67108864,
+  "WHENCE_CUR": 1,
+  "WHENCE_END": 2,
+  "WHENCE_SET": 0
+}
 
 export class WASIProcExit extends Error {
   constructor (code) {
