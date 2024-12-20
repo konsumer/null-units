@@ -68,10 +68,8 @@
       units.set_param(kickBassID, 'type', 0) // sine
       units.set_param(kickBassID, 'note', 18) // low note
       units.set_param(outID, 'gain', 8) // it's too loud!
-
       units.set_param(plateID, 'damp', 0.2) // space....
       units.set_param(plateID, 'mix', 0.5)
-
       units.set_param(delayID, 'feedback', 0.9)
       units.set_param(delayID, 'time', 500)
       units.set_param(delayID, 'mix', 0.4)
@@ -110,15 +108,12 @@
       units.connect(wavetableID, 0, pitchID, 0)
       units.connect(lpfID, 0, outID, 0)
       units.connect(hpfID, 0, scopeID, 0)
-
       units.connect(snareNoiseID, 0, snareGainID, 0)
       units.connect(snareGainID, 0, lpfID, 0)
       units.connect(snareGainID, 0, drumscopeID, 0)
-
       units.connect(kickBassID, 0, kickGainID, 0)
       units.connect(kickGainID, 0, lpfID, 0)
       units.connect(kickGainID, 0, drumscopeID, 0)
-
       units.connect(outID, 0, hpfID, 0)
       units.connect(hpfID, 0, delayID, 0)
       units.connect(delayID, 0, plateID, 0)

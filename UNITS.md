@@ -1,8 +1,117 @@
-## Null Units
+# Null Units
 
 I am no expert at audio-programming, so I'm sure these could be improved (PRs welcome!)
 
 Each of these effects is designed to provide classic studio-quality processing while remaining CPU-efficient and easy to use.
+
+## usage
+
+Here is basic setup:
+
+```js
+import NullManager from './null-manager.js'
+
+const units = new NullManager()
+
+// 0 is audio-out
+const audioOutID = 0
+```
+
+You can connect them to  other nodes like this:
+
+```js
+// wavetable -> delay -> audioOut
+units.connect(wavetableID, 0, delayID, 0)
+units.connect(delayID, 0, audioOutID, 0)
+```
+
+Any unit has some good info (including name & params) about it:
+
+```js
+console.log(get_info(delayID))
+```
+
+```json
+{
+  "name": "delay",
+  "params": [
+    {
+      "type": 3,
+      "min": 0,
+      "max": 2000,
+      "value": 500,
+      "name": "time"
+    },
+    {
+      "type": 3,
+      "min": 0,
+      "max": 1,
+      "value": 0.30000001192092896,
+      "name": "feedback"
+    },
+    {
+      "type": 3,
+      "min": 0,
+      "max": 1,
+      "value": 0.5,
+      "name": "mix"
+    },
+    {
+      "type": 0,
+      "min": false,
+      "max": true,
+      "value": false,
+      "name": "sync"
+    }
+  ],
+  "channelsIn": 1,
+  "channelsOut": 1
+}
+```
+
+And you can set/get params like this:
+
+```js
+units.set_param(scopeID, 'lineColor', 'green')
+units.get_param(delayID, 'mix')
+```
+
+You can also build a HTML UI very quickly:
+
+```js
+units.set_title(scopeID, 'Your Cool Stuff')
+document.body.appendChild(units.genui(scopeID))
+```
+
+Some need to this to be useful (`scopeNode`, `pitchNode`) but for others it just provides a fast way to edit params.
+
+
+## built-in
+
+It was helpful to use some built-in units, in the javascript API, while developing.
+
+```js
+// oscope
+const scopeID = units.scopeNode()
+
+// pitch-detector (best in middle-midi note-range, not as accurate with low notes)
+const pitchID = units.pitchNode()
+
+// oscilator that uses browser's audio-api (very reliable)
+const oscID = units.oscNode()
+```
+
+
+## wasm units
+
+Any language that compiles to wasm can be used to make new null-units. In general they should be kept effcient, and I tend to favor speed over accuracy. These will hopefully run on low-end devices, so they should be pretty small, in general.
+
+These can be use in javascript, like this:
+
+```js
+const wavetableID = await units.load('wavetable')
+const delayID = await units.load('delay')
+```
 
 ### Auto-Wah
 
@@ -146,7 +255,7 @@ This compressor design aims to be clean and musical while still being CPU-effici
 
 ### copy
 
-This is basically no-op, with no params. You can use it as a template.
+This is basically no-op, with no params. You can use it as a template. I used it for testing.
 
 ### Delay
 
@@ -465,6 +574,7 @@ The different folding algorithms provide various characters:
 
 The bias parameter (when using asymmetric type) can create interesting harmonic content by making the folding asymmetrical. The gain compensation helps maintain reasonable output levels regardless of the amount of folding.
 
+
 ### wavetable
 
-This is a very simple wavetable synth that uses waveforms loaded from the host. It's not the best way to do it (would probably be better with embedded samples) but it shows haow to request data from the host. Similar could be used for a sampler, for example.
+This is a very simple wavetable oscillator that uses waveforms loaded from the host. It's not the best way to do it (would probably be better with embedded samples or `oscNode`) but it shows how to request data from the host. Similar could be used for a full sampler, for example.

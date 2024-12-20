@@ -1,22 +1,5 @@
 // this is the unit-management API
-// this will be implemented in C, later
-
-/*
-// name is resolved by host, however, so like "wavetable" is "units/wavetable.wasm" or whatever
-unsigned int unit_load(char* name);
-
-void unit_unload(unsigned int unitSource);
-
-bool unit_connect(unsigned int unitSource, unsigned int unitSourcePort, unsigned int unitDestination, unsigned int unitDestinationPort);
-
-bool unit_disconnect(unsigned int unitSource, unsigned int unitSourcePort, unsigned int unitDestination, unsigned int unitDestinationPort);
-
-void unit_set_parm(unsigned int unitSource, unsigned int paramID, NullUnitParamValue* value, float timefromNowInSeconds);
-
-NullUnitParamValue* unit_get_parm(unsigned int unitSource, unsigned int paramID);
-
-NullUnitnInfo* unit_get_info(unsigned int unitSource);
-*/
+// this will also be implemented in C, later (for native)
 
 import Oscilloscope from './Oscilloscope.js'
 import PitchDetector from './PitchDetector.js'
@@ -255,6 +238,10 @@ export default class NullManager {
     const params = []
     this.units.push({ name: 'pitchdetect', params, channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
     return nextID
+  }
+
+  get_info(unitSourceId) {
+    return this.units[unitSourceId]
   }
 
   // this willl return a form DOM object that can be used to control a unit
