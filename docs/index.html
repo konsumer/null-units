@@ -6,6 +6,13 @@
       body {
         font-family: sans-serif;
       }
+      fieldset * {
+        display: block;
+      }
+      fieldset label {
+        display: inline-block;
+        user-select: none;
+      }
     </style>
   </head>
   <body>
@@ -13,7 +20,6 @@
   </body>
 <script type="module">
 import NullManager from './null-manager.js'
-import waveGenerator from './wave-generator.js'
 
 // I just like the Persian-scale
 function getRandomPersianNote(baseNote=60, octaveRange = 2) {
@@ -26,7 +32,6 @@ function getRandomPersianNote(baseNote=60, octaveRange = 2) {
             expandedScale.push(interval + (octave * 12));
         });
     }
-
     const randomIndex = Math.floor(Math.random() * expandedScale.length);
     return baseNote + expandedScale[randomIndex];
 }
@@ -40,53 +45,44 @@ async function oneTimeClick() {
 
   const outID = 0
   const scopeID = units.scopeNode()
+  const wavescopeID = units.scopeNode()
   const pitchID = units.pitchNode()
-
-  // customize look
-  units.set_param(scopeID, "width", 200)
-  units.set_param(scopeID, "height", 100)
-  units.set_param(scopeID, "backgroundColor", '#000000')
-  units.set_param(scopeID, "lineColor", '#ff0000')
-  units.set_param(scopeID, "zeroColor", '#ffffff')
-  units.set_param(scopeID, "lineWidth", 2)
-
-  /*
-  const testID = units.oscNode()
-  // test -> out
-  // test -> scope
-  units.connect(testID, 0, outID, 0)
-  units.connect(testID, 0, scopeID, 0)
-  units.connect(testID, 0, pitchID, 0)
-
-  // random notes/types
-  setInterval(() => {
-    units.set_param(testID, "note", getRandomPersianNote(36, 1))
-  }, 1000)
-  setInterval(() => {
-    units.set_param(testID, "type", (Math.random() * 3))
-  }, 100)
-  */
-
   const wavetableID = await units.load("wavetable")
   const lpfID = await units.load("lpf")
 
-  document.body.appendChild(units.genui(wavetableID))
-  document.body.appendChild(units.genui(lpfID))
-  document.body.appendChild(units.genui(scopeID))
-
   // set initial settings
+  units.set_param(wavescopeID, "lineColor", 'blue')
   units.set_param(wavetableID, "type", 0) // sine
   units.set_param(wavetableID, "note", 60) // middle-C
-  units.set_param(lpfID, "cutoff", 62) // middle D
+  units.set_param(lpfID, "cutoff", 22)
 
-  // wavetable -> lpf -> out
-  // lpf -> scope
-  // wavetable -> pitch
+  // for UI: set nicer names
+  units.set_title(wavetableID, 'WASM: Wave Table')
+  units.set_title(lpfID, 'WASM: Lowpass Filter')
+  units.set_title(scopeID, 'Sound (from lowpass/audio)')
+  units.set_title(wavescopeID, 'Wave Table Output')
+
+  // make UI
+  document.body.appendChild(units.genui(wavetableID))
+  document.body.appendChild(units.genui(wavescopeID))
+  document.body.appendChild(units.genui(lpfID))
+  document.body.appendChild(units.genui(scopeID))
+  document.body.appendChild(units.genui(pitchID))
+
+  // connect things
   units.connect(wavetableID, 0, lpfID, 0)
-  units.connect(wavetableID, 0, pitchID, 0)
-  units.connect(lpfID, 0, outID, 0)
+  units.connect(wavetableID, 0, wavescopeID, 0)
   units.connect(lpfID, 0, scopeID, 0)
+  units.connect(lpfID, 0, pitchID, 0)
+  units.connect(lpfID, 0, outID, 0)
 
+  // random notes/types
+  setInterval(() => {
+    units.set_param(wavetableID, "note", getRandomPersianNote(36, 1))
+  }, 1000)
+  setInterval(() => {
+    units.set_param(wavetableID, "type", (Math.random() * 3))
+  }, 250)
 }
 
 // click to play

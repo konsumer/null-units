@@ -27,11 +27,39 @@ int main(int argc, char *argv[]) {
 // called when you plugin is unloaded
 void destroy() {}
 
-// process a single value, in a 0-255 position frame, return output
-float process(uint8_t position, float input, uint8_t channel) {
-  float cutoff =  unitInfo.params[PARAM_CUTOFF].value.f;
+static float lastOutput[2] = {0.0f, 0.0f}; // For stereo, one per channel
 
-  return input;
+float process(uint8_t position, float input, uint8_t channel) {
+    // Input validation
+    if (isnan(input)) return 0.0f;
+    if (isinf(input)) return 0.0f;
+
+    float cutoffFrequency = noteToFreq(unitInfo.params[PARAM_CUTOFF].value.f);
+
+    // Ensure cutoff frequency is valid
+    if (cutoffFrequency <= 0.0f || isnan(cutoffFrequency)) {
+        cutoffFrequency = 440.0f; // fallback to a reasonable default
+    }
+
+    // Calculate alpha (smoothing factor)
+    float dt = 1.0f / SAMPLE_RATE;
+    float rc = 1.0f / (2.0f * M_PI * cutoffFrequency);
+    float alpha = dt / (rc + dt);
+
+    // Ensure alpha stays between 0 and 1
+    alpha = alpha > 1.0f ? 1.0f : (alpha < 0.0f ? 0.0f : alpha);
+
+    // Ensure channel index is valid
+    channel = channel % 2; // Limit to 2 channels
+
+    // Apply the filter
+    lastOutput[channel] = lastOutput[channel] + alpha * (input - lastOutput[channel]);
+
+    // Ensure output is valid
+    if (isnan(lastOutput[channel])) lastOutput[channel] = 0.0f;
+    if (isinf(lastOutput[channel])) lastOutput[channel] = 0.0f;
+
+    return lastOutput[channel];
 }
 
 // Get info about the unit

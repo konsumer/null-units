@@ -33,6 +33,10 @@ int main(int argc, char *argv[]) {
   gen_midi_float("note", &unitInfo.params[PARAM_NOTE]); // f32 0-127 midi frequency
   unitInfo.params[PARAM_TYPE].max.u = 3; // (0-3)
 
+  // setup initial sample from host
+  unitInfo.params[PARAM_TYPE].value.u = 4;
+  param_set(PARAM_TYPE, &unitInfo.params[PARAM_TYPE].value);
+
   return 0;
 }
 
@@ -61,7 +65,7 @@ void param_set(uint8_t paramId, NullUnitParamValue* value) {
 
   // change sample
   if (paramId == PARAM_TYPE && value->u != unitInfo.params[PARAM_TYPE].value.u) {
-
+    get_data_floats(value->u, 0, SAMPLE_COUNT, sample);
   }
 
   unitInfo.params[paramId].value = *value;

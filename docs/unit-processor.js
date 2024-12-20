@@ -26,6 +26,8 @@ class NullUnitProcessor extends AudioWorkletProcessor {
 
         // set a sample, by id number
         case 'set_data':
+          const { index, sample } = args
+          this.data[index] = sample
           break
 
         // set a param
@@ -48,9 +50,17 @@ class NullUnitProcessor extends AudioWorkletProcessor {
   // this will setup wasm unit & return info
   async loadWasm(bytes) {
     const wasi_snapshot_preview1 = new EasyWasiLite()
+
+    const memory = new WebAssembly.Memory({
+      initial: 2,
+      maximum: 30,
+    });
+
     const importObject = {
       wasi_snapshot_preview1,
       env: {
+        memory,
+
         trace(msgPtr) {
           console.log(this.wasi.getString(msgPtr))
         },
@@ -64,7 +74,17 @@ class NullUnitProcessor extends AudioWorkletProcessor {
         },
       }
     }
-    this.wasm = (await WebAssembly.instantiate(bytes, importObject)).instance.exports
+
+    // bind importObject to myself
+    for (const m of Object.keys(importObject)) {
+      for (const f of Object.keys(importObject[m])) {
+        if (typeof importObject[m][f] === 'function') {
+          importObject[m][f] = importObject[m][f].bind(this)
+        }
+      }
+    }
+
+    this.wasm = { ...(await WebAssembly.instantiate(bytes, importObject)).instance.exports, memory}
     wasi_snapshot_preview1.start(this.wasm)
     this.wasi = wasi_snapshot_preview1
     return this.getInfo()
@@ -136,7 +156,26 @@ class NullUnitProcessor extends AudioWorkletProcessor {
   }
 
   process(inputs, outputs) {
-    return true
+      if (!this?.wasm?.process) return true;
+
+      const output = outputs[0];
+      const input = inputs[0];
+
+      for (let channel = 0; channel < output.length; channel++) {
+          const outputChannel = output[channel];
+          const inputChannel = input && input[channel] ? input[channel] : undefined;
+
+          for (let i = 0; i < outputChannel.length; i++) {
+              let inputValue = 0;
+              if (inputChannel && typeof inputChannel[i] === 'number' && !isNaN(inputChannel[i])) {
+                  inputValue = inputChannel[i];
+              }
+
+              const processedValue = this.wasm.process(this.position++, inputValue, channel);
+              outputChannel[i] = isNaN(processedValue) ? 0 : processedValue;
+          }
+      }
+      return true;
   }
 }
 

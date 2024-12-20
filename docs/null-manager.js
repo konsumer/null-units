@@ -20,6 +20,7 @@ NullUnitnInfo* unit_get_info(unsigned int unitSource);
 
 import Oscilloscope from './Oscilloscope.js'
 import PitchDetector from './PitchDetector.js'
+import waveGenerator from './wave-generator.js'
 
 // this is the location of worker JS file
 const dirWorker = import.meta.url.split('/').slice(0, -1).join('/')
@@ -35,6 +36,14 @@ export default class NullManager {
     // unit 0 is audio-out
     this.units = [
       { name: 'out', channelsIn: 1, channelsOut: 0, audioNode: this.audioCtx.destination }
+    ]
+
+    // generate some initial mini-samples
+    this.samples = [
+      waveGenerator(0),
+      waveGenerator(1),
+      waveGenerator(2),
+      waveGenerator(3),
     ]
   }
 
@@ -54,7 +63,13 @@ export default class NullManager {
 
     const bytes = await fetch(`${dirUnits}/${name}.wasm`).then(r => r.arrayBuffer())
 
+    // send samples to unit
+    for (const index in this.samples) {
+      newUnit.audioNode.port.postMessage({ type: 'set_data', sample: this.samples[index], index })
+    }
+
     // wait for info
+    // TODO: this could be more robust, like a promise-based send/retval thing
     await new Promise((resolve, reject) => {
       newUnit.audioNode.port.onmessage = async e => {
         if (e?.data?.type === 'info' && e.data.id === nextID) {
@@ -140,13 +155,27 @@ export default class NullManager {
       return
     }
 
+    let p = -1
+
     try {
       // allow string paramId for convenience
-      const p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
+      p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
       if (p === -1) {
         throw new Error()
       }
+    } catch (e) {
+      console.error(`${unitSourceId}.${paramId} not found.`)
+    }
 
+    if (this.units[unitSourceId]?.params[p]) {
+      this.units[unitSourceId].params[p].value = value
+      if (this.units[unitSourceId].params[p].input && this.units[unitSourceId].params[p].input.value != value) {
+        this.units[unitSourceId].params[p].input.value = value
+        this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
+      }
+    }
+
+    try {
       setTimeout(() => {
         this.units[unitSourceId].audioNode.port.postMessage({ id: unitSourceId, type: 'param_set', paramID: p, value });
       }, timefromNowInSeconds * 1000)
@@ -169,6 +198,12 @@ export default class NullManager {
 
   // these are web-specific
 
+
+  // set the title of box for UI
+  set_title(unitSourceId, title) {
+    this.units[unitSourceId].title = title
+  }
+
   // generate a scope
   // doesn't output canvas (use genui)
   scopeNode() {
@@ -177,6 +212,7 @@ export default class NullManager {
     scope.canvas = document.createElement('canvas')
     scope.start()
     this.units.push({name: 'scope', channelsIn: 1, channelsOut: 0, scope, audioNode: scope.destination })
+    // TODO: add params that look like units
     return nextID
   }
 
@@ -185,6 +221,7 @@ export default class NullManager {
     const nextID =  this.units.length
     const audioNode = this.audioCtx.createOscillator()
     this.units.push({name: 'osc', channelsIn: 0, channelsOut: 1, audioNode })
+    // TODO: add params that look like units
     audioNode.start()
     return nextID
   }
@@ -195,43 +232,75 @@ export default class NullManager {
     const detector = new PitchDetector(this.audioCtx)
     detector.start()
     this.units.push({name: 'pitchdetect', channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
+    // TODO: add params that look like units
     return nextID
   }
 
   // this willl return a form DOM object that can be used to control a unit
   genui(unitSourceId) {
-    const  f = document.createElement("form")
+    const f = document.createElement("form")
     f.id=`unit_${unitSourceId}`
 
-    for (const unit of this.units) {
-      if (unit.name === 'out') {
-        continue
-      }
+    const unit = this.units[unitSourceId]
+    if (!unit || unit.name === 'out') {
+      return f
+    }
 
-      // scopes have a canvas, just output that
-      if (unit.name === 'scope') {
-        f.appendChild(unit.scope.canvas)
+    const fs = document.createElement("fieldset")
+    f.appendChild(fs)
+    const l = document.createElement("legend")
+    l.innerText = `${unit.title || unit.name} (${unitSourceId})`
+    fs.appendChild(l)
 
-      // pitchdetect has value for note/frequency, but no display
-      } else if (unit.name === 'pitchdetect') {
+    switch (unit.name) {
+      case 'scope':
+        fs.appendChild(unit.scope.canvas)
+        break
+
+      case 'pitchdetect':
         const p = document.createElement('pre')
         p.className='pitchdetector'
         unit.detector.onchange = (info) => {
           p.innerHTML = JSON.stringify(info, null, 2)
         }
-        f.appendChild(p)
+        fs.appendChild(p)
+        break
 
-      // wavetable is a bit special, as it has view of waveforms
-      } else if (unit.name === 'wavetable') {
+      default:
+        for (const param of unit.params) {
+          if (param.type === 0) { // bool
 
-      // just add form-elements
-      } else {
+          }
+          if ([1,2,3].includes(param.type)) { // numbers
+            const i = document.createElement('input')
+            param.input = i
+            i.type = 'range'
+            i.max = param.max
+            i.min = param.min
+            i.value = param.value
+            i.name = param.name
+            i.id = param.name
 
-      }
+            if ([1, 2].includes(param.type)) { // int
+              i.step = 1
+            } else {
+              i.step = 0.1
+            }
+
+            i.addEventListener('change', e => {
+              e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.value}`
+              this.set_param(unitSourceId, param.name, e.target.value)
+            })
+
+            const l = document.createElement('label')
+            l.innerText = `${param.name}: ${param.value}`
+            l.htmlFor = param.name
+
+            fs.appendChild(l)
+            fs.appendChild(i)
+          }
+        }
     }
-    f.addEventListener('change', e => {
-      // process form-change here
-    })
 
     return f
   }
