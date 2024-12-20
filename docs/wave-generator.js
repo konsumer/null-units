@@ -1,7 +1,7 @@
 // generate waveforms that wavetable can load (float32)
 // type is 0/1/2/3 sin/sqr/tri/saw
 
-export default function waveGenerator(type = 0, size = 256) {
+export default function waveGenerator (type = 0, size = 256) {
   const out = new Float32Array(size)
 
   for (let i = 0; i < size; i++) {

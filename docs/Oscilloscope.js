@@ -1,6 +1,6 @@
 // this is a pseudo-unit that makes an aoscilloscope
 export default class Oscilloscope {
-  constructor(audioContext) {
+  constructor (audioContext) {
     this.audioContext = audioContext
     this.canvas = null
     this.ctx = null
@@ -17,7 +17,7 @@ export default class Oscilloscope {
     this.lineWidth = 2
   }
 
-  set canvas(element) {
+  set canvas (element) {
     if (!element) return
     this.canvasElement = element
     this.ctx = element.getContext('2d')
@@ -26,15 +26,15 @@ export default class Oscilloscope {
     if (!element.height) element.height = 200
   }
 
-  get canvas() {
+  get canvas () {
     return this.canvasElement
   }
 
-  get destination() {
+  get destination () {
     return this.analyser
   }
 
-  start() {
+  start () {
     if (!this.canvas || !this.ctx) {
       throw new Error('Canvas must be set before starting oscilloscope')
     }
@@ -42,11 +42,11 @@ export default class Oscilloscope {
     this.draw()
   }
 
-  stop() {
+  stop () {
     this.isRunning = false
   }
 
-  draw() {
+  draw () {
     if (!this.isRunning) return
 
     const { ctx, canvas, dataArray, bufferLength, analyser } = this

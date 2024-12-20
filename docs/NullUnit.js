@@ -2,7 +2,7 @@
 
 // this acts like an audio-context, but with a scope to look at
 export class Oscilloscope {
-  constructor(audioContext) {
+  constructor (audioContext) {
     this.audioContext = audioContext
     this.canvas = null
     this.ctx = null
@@ -19,7 +19,7 @@ export class Oscilloscope {
     this.lineWidth = 2
   }
 
-  set canvas(element) {
+  set canvas (element) {
     if (!element) return
     this.canvasElement = element
     this.ctx = element.getContext('2d')
@@ -28,15 +28,15 @@ export class Oscilloscope {
     if (!element.height) element.height = 200
   }
 
-  get canvas() {
+  get canvas () {
     return this.canvasElement
   }
 
-  get destination() {
+  get destination () {
     return this.analyser
   }
 
-  start() {
+  start () {
     if (!this.canvas || !this.ctx) {
       throw new Error('Canvas must be set before starting oscilloscope')
     }
@@ -44,11 +44,11 @@ export class Oscilloscope {
     this.draw()
   }
 
-  stop() {
+  stop () {
     this.isRunning = false
   }
 
-  draw() {
+  draw () {
     if (!this.isRunning) return
 
     const { ctx, canvas, dataArray, bufferLength, analyser } = this
@@ -96,15 +96,15 @@ export class Oscilloscope {
   }
 }
 
-export let dir = import.meta.url.split('/').slice(0, -1).join('/')
+export const dir = import.meta.url.split('/').slice(0, -1).join('/')
 
 // extend AudioContext to add NullUnit stuff
 export default class NullUnitContext extends AudioContext {
-  createOscilloscope() {
+  createOscilloscope () {
     return new Oscilloscope(this)
   }
 
-  async createUnit(url) {
+  async createUnit (url) {
     const bytes = await fetch(url).then(r => r.arrayBuffer())
     await this.audioWorklet.addModule(`${dir}/unit-processor.js`)
     const unit = new AudioWorkletNode(this, 'null-unit')
@@ -113,7 +113,7 @@ export default class NullUnitContext extends AudioContext {
 
     // wait for initial info
     await new Promise((resolve, reject) => {
-      unit.port.onmessage = ({ data: { type, ...args  }  }) => {
+      unit.port.onmessage = ({ data: { type, ...args } }) => {
         if (type === 'info') {
           info = args.info
           paramNames = info.params.map(p => p.name)
@@ -124,7 +124,7 @@ export default class NullUnitContext extends AudioContext {
     })
 
     const handler = {
-      get(...a) {
+      get (...a) {
         if (a[1] === 'connect') {
           return outNode => unit.connect(outNode)
         }
@@ -132,7 +132,7 @@ export default class NullUnitContext extends AudioContext {
         if (i > -1) {
           const param = info.params[i]
           return {
-            setValueAtTime(value, time) {
+            setValueAtTime (value, time) {
               setTimeout(() => unit.port.postMessage({ type: 'param_set', paramID: i, value }), time / 1000)
             },
 

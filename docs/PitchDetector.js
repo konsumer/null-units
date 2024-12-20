@@ -1,7 +1,7 @@
 // this is a pseudo-unit that detects closes note
 
 export default class PitchDetector {
-  constructor(audioContext) {
+  constructor (audioContext) {
     this.audioContext = audioContext
     this.analyser = this.audioContext.createAnalyser()
     this.analyser.fftSize = 2048
@@ -20,15 +20,15 @@ export default class PitchDetector {
     this.isRunning = false
   }
 
-  connect(source) {
+  connect (source) {
     source.connect(this.analyser)
   }
 
   // Get frequency from autocorrelation
-  getFrequency() {
+  getFrequency () {
     this.analyser.getFloatTimeDomainData(this.dataArray)
 
-    let ACF = [] // autocorrelation function
+    const ACF = [] // autocorrelation function
     let sum = 0
 
     // Calculate autocorrelation
@@ -64,7 +64,7 @@ export default class PitchDetector {
   }
 
   // Convert frequency to nearest note
-  getNote(frequency) {
+  getNote (frequency) {
     // A4 = 440hz
     const noteNumber = 12 * (Math.log(frequency / 440) / Math.log(2))
     const note = Math.round(noteNumber) + 69 // MIDI note number
@@ -73,25 +73,25 @@ export default class PitchDetector {
 
     return {
       note: noteName,
-      octave: octave,
-      frequency: frequency,
+      octave,
+      frequency,
       midiNote: note
     }
   }
 
-  start() {
+  start () {
     this.isRunning = true
     this.update()
   }
 
   // Main update function
-  update() {
+  update () {
     if (this.isRunning) {
       const frequency = this.getFrequency()
       if (frequency > 0) {
         this.note = this.getNote(frequency)
       } else {
-        this.note =  {
+        this.note = {
           note: 'UNKOWN',
           octave: 0,
           frequency: 0,

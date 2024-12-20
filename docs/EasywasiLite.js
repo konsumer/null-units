@@ -98,7 +98,7 @@ export class WasiPreview1 {
 
     this.nextFd = this.fds.size
     this.textDecoder = {
-      decode(buffer) {
+      decode (buffer) {
         if (buffer instanceof ArrayBuffer) {
           buffer = new Uint8Array(buffer)
         }
@@ -112,7 +112,7 @@ export class WasiPreview1 {
     }
 
     this.textEncoder = {
-      encode(str) {
+      encode (str) {
         const arr = new Uint8Array(str.length)
         for (let i = 0; i < str.length; i++) {
           arr[i] = str.charCodeAt(i) & 0xff
@@ -234,17 +234,17 @@ export class WasiPreview1 {
   }
 
   // read a string from memory
-  readString(pntr) {
-    const mem = new Uint8Array(this.wasm.memory.buffer.slice(pntr, pntr+1024))
+  readString (pntr) {
+    const mem = new Uint8Array(this.wasm.memory.buffer.slice(pntr, pntr + 1024))
     const len = this.strlen(mem)
     return this.textDecoder.decode(mem.slice(0, len))
   }
 
-  strlen(mem, ptr=0) {
+  strlen (mem, ptr = 0) {
     let c
-    let i=ptr
+    let i = ptr
     while (c = mem[i++]) { }
-    return i-ptr
+    return i - ptr
   }
 
   // Args functions
@@ -314,7 +314,7 @@ export class WasiPreview1 {
     return defs.ERRNO_SUCCESS
   }
 
-  fd_filestat_get(fd, filestatPtr) {
+  fd_filestat_get (fd, filestatPtr) {
     const fileDesc = this.fds.get(fd)
     if (!fileDesc) return defs.ERRNO_BADF
 
@@ -437,16 +437,16 @@ export class WasiPreview1 {
 
     switch (whence) {
       case defs.WHENCE_SET:
-          newPosition = noffset
-          break
+        newPosition = noffset
+        break
       case defs.WHENCE_CUR:
-          newPosition = Number(fileDesc.handle.position) + noffset
-          break
+        newPosition = Number(fileDesc.handle.position) + noffset
+        break
       case defs.WHENCE_END:
-          newPosition = Number(stats.size) + noffset
-          break
+        newPosition = Number(stats.size) + noffset
+        break
       default:
-          return defs.ERRNO_INVAL
+        return defs.ERRNO_INVAL
     }
 
     // Update position

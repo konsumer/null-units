@@ -29,7 +29,7 @@ const dirWorker = import.meta.url.split('/').slice(0, -1).join('/')
 const dirUnits = `${dirWorker}/units`
 
 export default class NullManager {
-  constructor(audioCtx) {
+  constructor (audioCtx) {
     this.audioCtx = audioCtx || new AudioContext()
     this.audioCtx.resume()
 
@@ -43,12 +43,12 @@ export default class NullManager {
       waveGenerator(0),
       waveGenerator(1),
       waveGenerator(2),
-      waveGenerator(3),
+      waveGenerator(3)
     ]
   }
 
-  async load(name) {
-    const nextID =  this.units.length
+  async load (name) {
+    const nextID = this.units.length
 
     const newUnit = {
       name,
@@ -81,7 +81,7 @@ export default class NullManager {
           resolve()
         }
       }
-      newUnit.audioNode.port.postMessage({ type: 'load', bytes, id: nextID });
+      newUnit.audioNode.port.postMessage({ type: 'load', bytes, id: nextID })
     })
 
     return nextID
@@ -91,15 +91,15 @@ export default class NullManager {
     // TODO: IDs need to stay the same, so delete (unconnecting it) and set position to undefined
   }
 
-  connect(unitSourceId, unitSourcePort, unitDestinationId, unitDestinationPort) {
+  connect (unitSourceId, unitSourcePort, unitDestinationId, unitDestinationPort) {
     this.units[unitSourceId].audioNode.connect(this.units[unitDestinationId].audioNode, unitSourcePort, unitDestinationPort)
   }
 
-  disconnect(unitSourceId, unitSourcePort, unitDestinationId, unitDestinationPort) {
+  disconnect (unitSourceId, unitSourcePort, unitDestinationId, unitDestinationPort) {
     // TODO
   }
 
-  set_param(unitSourceId, paramId, value, timefromNowInSeconds=0) {
+  set_param (unitSourceId, paramId, value, timefromNowInSeconds = 0) {
     // pitchdetector has no options
     if (this.units[unitSourceId].name === 'pitchdetect') {
       return
@@ -110,16 +110,16 @@ export default class NullManager {
       if (paramId === 0 || paramId === 'type') {
         // sin/sqr/tri/saw
         if (Math.floor(value) === 0) {
-          this.units[unitSourceId].audioNode.type ='sine'
+          this.units[unitSourceId].audioNode.type = 'sine'
         }
         if (Math.floor(value) === 1) {
-          this.units[unitSourceId].audioNode.type ='square'
+          this.units[unitSourceId].audioNode.type = 'square'
         }
         if (Math.floor(value) === 2) {
-          this.units[unitSourceId].audioNode.type ='triangle'
+          this.units[unitSourceId].audioNode.type = 'triangle'
         }
         if (Math.floor(value) === 3) {
-          this.units[unitSourceId].audioNode.type ='sawtooth'
+          this.units[unitSourceId].audioNode.type = 'sawtooth'
         }
       }
       if (paramId === 1 || paramId === 'note') {
@@ -177,14 +177,14 @@ export default class NullManager {
 
     try {
       setTimeout(() => {
-        this.units[unitSourceId].audioNode.port.postMessage({ id: unitSourceId, type: 'param_set', paramID: p, value });
+        this.units[unitSourceId].audioNode.port.postMessage({ id: unitSourceId, type: 'param_set', paramID: p, value })
       }, timefromNowInSeconds * 1000)
     } catch (e) {
       console.error(`${unitSourceId}.${paramId} not found.`)
     }
   }
 
-  async get_param(unitSourceId, paramId) {
+  async get_param (unitSourceId, paramId) {
     try {
       // allow string paramId for convenience
       const p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
@@ -198,57 +198,56 @@ export default class NullManager {
 
   // these are web-specific
 
-
   // set the title of box for UI
-  set_title(unitSourceId, title) {
+  set_title (unitSourceId, title) {
     this.units[unitSourceId].title = title
   }
 
   // generate a scope
   // doesn't output canvas (use genui)
-  scopeNode() {
-    const nextID =  this.units.length
+  scopeNode () {
+    const nextID = this.units.length
     const scope = new Oscilloscope(this.audioCtx)
     scope.canvas = document.createElement('canvas')
     scope.start()
-    this.units.push({name: 'scope', channelsIn: 1, channelsOut: 0, scope, audioNode: scope.destination })
+    this.units.push({ name: 'scope', channelsIn: 1, channelsOut: 0, scope, audioNode: scope.destination })
     // TODO: add params that look like units
     return nextID
   }
 
   // tester node that creates an oscillator
-  oscNode() {
-    const nextID =  this.units.length
+  oscNode () {
+    const nextID = this.units.length
     const audioNode = this.audioCtx.createOscillator()
-    this.units.push({name: 'osc', channelsIn: 0, channelsOut: 1, audioNode })
+    this.units.push({ name: 'osc', channelsIn: 0, channelsOut: 1, audioNode })
     // TODO: add params that look like units
     audioNode.start()
     return nextID
   }
 
   // detect pitch/note of incoming data
-  pitchNode() {
-    const nextID =  this.units.length
+  pitchNode () {
+    const nextID = this.units.length
     const detector = new PitchDetector(this.audioCtx)
     detector.start()
-    this.units.push({name: 'pitchdetect', channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
+    this.units.push({ name: 'pitchdetect', channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
     // TODO: add params that look like units
     return nextID
   }
 
   // this willl return a form DOM object that can be used to control a unit
-  genui(unitSourceId) {
-    const f = document.createElement("form")
-    f.id=`unit_${unitSourceId}`
+  genui (unitSourceId) {
+    const f = document.createElement('form')
+    f.id = `unit_${unitSourceId}`
 
     const unit = this.units[unitSourceId]
     if (!unit || unit.name === 'out') {
       return f
     }
 
-    const fs = document.createElement("fieldset")
+    const fs = document.createElement('fieldset')
     f.appendChild(fs)
-    const l = document.createElement("legend")
+    const l = document.createElement('legend')
     l.innerText = `${unit.title || unit.name} (${unitSourceId})`
     fs.appendChild(l)
 
@@ -259,7 +258,7 @@ export default class NullManager {
 
       case 'pitchdetect':
         const p = document.createElement('pre')
-        p.className='pitchdetector'
+        p.className = 'pitchdetector'
         unit.detector.onchange = (info) => {
           p.innerHTML = JSON.stringify(info, null, 2)
         }
@@ -271,7 +270,7 @@ export default class NullManager {
           if (param.type === 0) { // bool
 
           }
-          if ([1,2,3].includes(param.type)) { // numbers
+          if ([1, 2, 3].includes(param.type)) { // numbers
             const i = document.createElement('input')
             param.input = i
             i.type = 'range'
