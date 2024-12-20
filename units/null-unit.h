@@ -59,8 +59,12 @@ void _null_unit_free(void* ptr) {
 __attribute__((export_name("get_info")))
 NullUnitnInfo* get_info();
 
+/*
+sampleRate: engine sampleRate
+currentTime: represents the ever-increasing context time of the audio block being processed.
+*/
 __attribute__((export_name("process")))
-float process(uint8_t position, float input, uint8_t channel, float sampleRate);
+float process(uint8_t position, float input, uint8_t channel, float sampleRate, double currentTime);
 
 __attribute__((export_name("destroy")))
 void destroy();

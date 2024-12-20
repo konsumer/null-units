@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
 void destroy() {}
 
 // process a single value, in a 0-255 position frame, return output
-float process(uint8_t position, float input, uint8_t channel, float sampleRate) {
+float process(uint8_t position, float input, uint8_t channel, float sampleRate, double currentTime) {
   float gain = unitInfo.params[PARAM_GAIN].value.f / 64.0f;
   return input * gain;
 }

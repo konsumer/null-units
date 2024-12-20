@@ -29,7 +29,7 @@ void destroy() {}
 
 static float lastOutput[2] = {0.0f, 0.0f}; // For stereo, one per channel
 
-float process(uint8_t position, float input, uint8_t channel, float sampleRate) {
+float process(uint8_t position, float input, uint8_t channel, float sampleRate, double currentTime) {
     // Input validation
     if (isnan(input)) return 0.0f;
     if (isinf(input)) return 0.0f;

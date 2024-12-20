@@ -171,7 +171,7 @@ class NullUnitProcessor extends AudioWorkletProcessor {
           inputValue = inputChannel[i]
         }
 
-        const processedValue = this.wasm.process(this.position++, inputValue, channel, sampleRate)
+        const processedValue = this.wasm.process(this.position++, inputValue, channel, sampleRate, currentTime)
         outputChannel[i] = isNaN(processedValue) ? 0 : processedValue
       }
     }
