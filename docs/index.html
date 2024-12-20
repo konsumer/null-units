@@ -50,6 +50,8 @@ async function oneTimeClick() {
   const wavescopeID = units.scopeNode()
   const pitchID = units.pitchNode()
   const wavetableID = await units.load("wavetable")
+  // const wavetableID = units.oscNode()
+
   const lpfID = await units.load("lpf")
   const snareNoiseID =  await units.load("static")
   const snareGainID =  await units.load("gain")

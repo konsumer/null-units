@@ -25,58 +25,86 @@ export default class PitchDetector {
   }
 
   // Get frequency from autocorrelation
-  getFrequency () {
-    this.analyser.getFloatTimeDomainData(this.dataArray)
+  getFrequency() {
+      this.analyser.getFloatTimeDomainData(this.dataArray);
 
-    const ACF = [] // autocorrelation function
-    let sum = 0
+      const ACF = [];
 
-    // Calculate autocorrelation
-    for (let lag = 0; lag < this.bufferLength; lag++) {
-      let tmp = 0
-      for (let i = 0; i < this.bufferLength - lag; i++) {
-        tmp += this.dataArray[i] * this.dataArray[i + lag]
+      // Calculate autocorrelation
+      for (let lag = 0; lag < this.bufferLength; lag++) {
+          let tmp = 0;
+          for (let i = 0; i < this.bufferLength - lag; i++) {
+              tmp += this.dataArray[i] * this.dataArray[i + lag];
+          }
+          ACF[lag] = tmp;
       }
-      ACF[lag] = tmp
-      sum += tmp
-    }
 
-    // Find first peak after zero
-    let foundPeak = false
-    let peak = -1
-
-    for (let i = 1; i < this.bufferLength; i++) {
-      if (ACF[i] > ACF[i - 1] && ACF[i] > ACF[i + 1]) {
-        if (!foundPeak && ACF[i] > 0) {
-          foundPeak = true
-          peak = i
-          break
-        }
+      // Normalize ACF
+      const maxACF = Math.max(...ACF);
+      for (let i = 0; i < this.bufferLength; i++) {
+          ACF[i] = ACF[i] / maxACF;
       }
-    }
 
-    if (peak !== -1) {
-      const frequency = this.audioContext.sampleRate / peak
-      return frequency
-    }
+      // Set frequency range limits for MIDI notes
+      const minFreq = 80;   // Around MIDI note 40 (E2)
+      const maxFreq = 1000; // Around MIDI note 83 (B5)
+      const minLag = Math.floor(this.audioContext.sampleRate / maxFreq);
+      const maxLag = Math.floor(this.audioContext.sampleRate / minFreq);
 
-    return 0
+      const threshold = 0.3;  // Lower threshold for peak detection
+
+      let bestPeak = -1;
+      let bestPeakValue = -1;
+
+      // Find the first strong peak after the first zero crossing
+      let foundZeroCrossing = false;
+
+      for (let i = minLag; i < maxLag; i++) {
+          if (!foundZeroCrossing && ACF[i] <= 0) {
+              foundZeroCrossing = true;
+              continue;
+          }
+
+          if (foundZeroCrossing &&
+              ACF[i] > threshold &&
+              ACF[i] > ACF[i - 1] &&
+              ACF[i] > ACF[i + 1]) {
+              // Verify this is a genuine peak by checking surrounding values
+              const isPeakValid = ACF[i] > ACF[i - 2] &&
+                                ACF[i] > ACF[i + 2] &&
+                                ACF[i] > ACF[i - 3] &&
+                                ACF[i] > ACF[i + 3];
+
+              if (isPeakValid && ACF[i] > bestPeakValue) {
+                  bestPeak = i;
+                  bestPeakValue = ACF[i];
+                  break; // Take the first valid peak
+              }
+          }
+      }
+
+      if (bestPeak !== -1) {
+          const frequency = this.audioContext.sampleRate / bestPeak;
+          return frequency;
+      }
+
+      return 0;
   }
 
   // Convert frequency to nearest note
   getNote (frequency) {
-    // A4 = 440hz
-    const noteNumber = 12 * (Math.log(frequency / 440) / Math.log(2))
-    const note = Math.round(noteNumber) + 69 // MIDI note number
-    const octave = Math.floor((note - 12) / 12)
-    const noteName = this.noteStrings[note % 12]
+      // A4 = 440hz
+      const noteNumber = 12 * (Math.log2(frequency / 440)) // Use log2 directly
+      const note = Math.round(noteNumber) + 69 // MIDI note number
+      const octave = Math.floor((note - 12) / 12)
+      const noteName = this.noteStrings[note % 12]
 
-    return {
-      note: noteName,
-      octave,
-      frequency,
-      midiNote: note
-    }
+      return {
+          note: noteName,
+          octave,
+          frequency,
+          midiNote: note
+      }
   }
 
   start () {

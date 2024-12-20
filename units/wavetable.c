@@ -8,7 +8,7 @@
 NullUnitnInfo unitInfo;
 
 // the number of params this can receive
-#define PARAM_COUNT 3
+#define PARAM_COUNT 2
 
 #define PARAM_TYPE 0
 #define PARAM_NOTE 1
@@ -34,8 +34,7 @@ int main(int argc, char *argv[]) {
   unitInfo.params[PARAM_TYPE].max.u = 3; // (0-3)
 
   // setup initial sample from host
-  unitInfo.params[PARAM_TYPE].value.u = 4;
-  param_set(PARAM_TYPE, &unitInfo.params[PARAM_TYPE].value);
+  get_data_floats(0, 0, SAMPLE_COUNT, sample);
 
   return 0;
 }

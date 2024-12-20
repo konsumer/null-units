@@ -105,6 +105,17 @@ export default class NullManager {
       return
     }
 
+    let p = -1
+    try {
+      // allow string paramId for convenience
+      p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
+      if (p === -1) {
+        throw new Error()
+      }
+    } catch (e) {
+      console.error(`${unitSourceId}.${paramId} not found.`)
+    }
+
     // params for osc (tester) follow wavetable
     if (this.units[unitSourceId].name === 'osc') {
       if (paramId === 0 || paramId === 'type') {
@@ -155,18 +166,6 @@ export default class NullManager {
       return
     }
 
-    let p = -1
-
-    try {
-      // allow string paramId for convenience
-      p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
-      if (p === -1) {
-        throw new Error()
-      }
-    } catch (e) {
-      console.error(`${unitSourceId}.${paramId} not found.`)
-    }
-
     if (this.units[unitSourceId]?.params[p]) {
       this.units[unitSourceId].params[p].value = value
       if (this.units[unitSourceId].params[p].input && this.units[unitSourceId].params[p].input.value != value) {
@@ -210,7 +209,17 @@ export default class NullManager {
     const scope = new Oscilloscope(this.audioCtx)
     scope.canvas = document.createElement('canvas')
     scope.start()
-    this.units.push({ name: 'scope', channelsIn: 1, channelsOut: 0, scope, audioNode: scope.destination })
+
+    const params = [
+      { "name": "width"},
+      { "name": "height"},
+      { "name": "backgroundColor"},
+      { "name": "lineColor"},
+      { "name": "zeroColor"},
+      { "name": "lineWidth"},
+      { "name": "canvas"},
+    ]
+    this.units.push({ name: 'scope', params, channelsIn: 1, channelsOut: 0, scope, audioNode: scope.destination })
     // TODO: add params that look like units
     return nextID
   }
@@ -219,8 +228,11 @@ export default class NullManager {
   oscNode () {
     const nextID = this.units.length
     const audioNode = this.audioCtx.createOscillator()
-    this.units.push({ name: 'osc', channelsIn: 0, channelsOut: 1, audioNode })
-    // TODO: add params that look like units
+    const params = [
+      { "type": 1, "min": 0, "max": 3, "value": 0, "name": "type"},
+      { "type": 3, "min": 0, "max": 127, "value": 0, "name": "note" }
+    ]
+    this.units.push({ name: 'osc', channelsIn: 0, channelsOut: 1, audioNode, params})
     audioNode.start()
     return nextID
   }
@@ -230,8 +242,8 @@ export default class NullManager {
     const nextID = this.units.length
     const detector = new PitchDetector(this.audioCtx)
     detector.start()
-    this.units.push({ name: 'pitchdetect', channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
-    // TODO: add params that look like units
+    const params = []
+    this.units.push({ name: 'pitchdetect', params, channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
     return nextID
   }
 
