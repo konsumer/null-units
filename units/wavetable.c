@@ -14,7 +14,6 @@ NullUnitnInfo unitInfo;
 #define PARAM_NOTE 1
 
 #define SAMPLE_COUNT 256
-#define FRAME_SIZE 256.0f
 
 float sample[SAMPLE_COUNT] = {};
 
@@ -48,7 +47,7 @@ float process(uint8_t position, float input, uint8_t channel, float sampleRate, 
     float freq = noteToFreq(unitInfo.params[PARAM_NOTE].value.f);
 
     // Calculate how many cycles should occur in one frame
-    float cyclesPerFrame = (freq * FRAME_SIZE) / sampleRate;
+    float cyclesPerFrame = (freq * SAMPLE_COUNT) / sampleRate;
 
     float scaledPos = (position * cyclesPerFrame);
 

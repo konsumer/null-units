@@ -23,6 +23,10 @@ npm run clean
 npm run build
 ```
 
+## available units
+
+You can read lots more about what is already made [here](UNITS.md). There is a lot of room for improvment, and I would love more, especially higher-level full units (complete emulations of machines and stuff.) PRs are definitely welcome.
+
 
 ## unit API
 

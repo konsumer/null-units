@@ -18,143 +18,157 @@
   <body>
     <p>Click to start</p>
   </body>
-<script type="module">
-import NullManager from './null-manager.js'
+  <script type="module">
+    import NullManager from './null-manager.js'
 
-// I just like the Persian-scale
-function getRandomPersianNote(baseNote=60, octaveRange = 2) {
-    const persianScale = [0, 1, 4, 5, 6, 8, 11];
-
-    // Create an expanded scale across multiple octaves
-    const expandedScale = [];
-    for (let octave = 0; octave < octaveRange; octave++) {
-        persianScale.forEach(interval => {
-            expandedScale.push(interval + (octave * 12));
-        });
+    // I just like the Persian-scale
+    function getRandomPersianNote(baseNote = 60, octaveRange = 2) {
+      const persianScale = [0, 1, 4, 5, 6, 8, 11]
+      const expandedScale = []
+      for (let octave = 0; octave < octaveRange; octave++) {
+        persianScale.forEach((interval) => {
+          expandedScale.push(interval + octave * 12)
+        })
+      }
+      const randomIndex = Math.floor(Math.random() * expandedScale.length)
+      return baseNote + expandedScale[randomIndex]
     }
-    const randomIndex = Math.floor(Math.random() * expandedScale.length);
-    return baseNote + expandedScale[randomIndex];
-}
 
-// click to play
-async function oneTimeClick() {
-  document.removeEventListener('click', oneTimeClick)
-  document.body.innerHTML = 'Play Demo Song? <input type="checkbox" checked id="playdemo" /><br/><br/>'
+    // click to play
+    async function oneTimeClick() {
+      document.removeEventListener('click', oneTimeClick)
+      document.body.innerHTML = 'Play Demo Song? <input type="checkbox" checked id="playdemo" /><br/><br/>'
 
-  const units = new NullManager()
+      const units = new NullManager()
 
-  const audioOutID = 0
+      const audioOutID = 0
 
-  const outID = await units.load("gain")
-  const scopeID = units.scopeNode()
-  const wavescopeID = units.scopeNode()
-  const pitchID = units.pitchNode()
-  const wavetableID = await units.load("wavetable")
-  // const wavetableID = units.oscNode()
+      const outID = await units.load('gain')
+      const scopeID = units.scopeNode()
+      const wavescopeID = units.scopeNode()
+      const pitchID = units.pitchNode()
+      const wavetableID = await units.load('wavetable')
+      const delayID = await units.load('delay')
+      const plateID = await units.load('plate')
+      const lpfID = await units.load('mooglpf')
+      const hpfID = await units.load('hpf')
+      const snareNoiseID = await units.load('static')
+      const snareGainID = await units.load('gain')
+      const kickGainID = await units.load('gain')
+      const kickBassID = await units.load('wavetable')
+      const drumscopeID = units.scopeNode()
 
-  const lpfID = await units.load("lpf")
-  const snareNoiseID =  await units.load("static")
-  const snareGainID =  await units.load("gain")
-  const kickGainID =  await units.load("gain")
-  const kickBassID = await units.load("wavetable")
-  const drumscopeID = units.scopeNode()
+      // set initial settings
+      units.set_param(wavescopeID, 'lineColor', 'blue')
+      units.set_param(scopeID, 'lineColor', 'green')
+      units.set_param(wavetableID, 'type', 2) // tri
+      units.set_param(wavetableID, 'note', 60) // middle-C
+      units.set_param(lpfID, 'cutoff', 90)
+      units.set_param(lpfID, 'resonance', 0.6)
+      units.set_param(kickBassID, 'type', 0) // sine
+      units.set_param(kickBassID, 'note', 18) // low note
+      units.set_param(outID, 'gain', 8) // it's too loud!
 
-  // set initial settings
-  units.set_param(wavescopeID, "lineColor", 'blue')
-  units.set_param(scopeID, "lineColor", 'green')
-  units.set_param(wavetableID, "type", 2) // tri
-  units.set_param(wavetableID, "note", 60) // middle-C
-  units.set_param(lpfID, "cutoff", 22)
-  units.set_param(kickBassID, "type", 0) // sine
-  units.set_param(kickBassID, "note", 18) // low note
-  units.set_param(outID, "gain", 20) // it's too loud!
+      units.set_param(plateID, 'damp', 0.2) // space....
+      units.set_param(plateID, 'mix', 0.5)
 
-  // for UI: set nicer names
-  units.set_title(wavetableID, 'WASM: Wave Table')
-  units.set_title(lpfID, 'WASM: Lowpass Filter')
-  units.set_title(scopeID, 'Output')
-  units.set_title(wavescopeID, 'Wave Table Output')
-  units.set_title(snareGainID, 'Static Gain (for snare-like sound)')
-  units.set_title(kickBassID, 'Bass (for kick')
-  units.set_title(kickGainID, 'Bass Gain (for kick)')
-  units.set_title(drumscopeID, "Drums & Bass?")
-  units.set_title(outID, "Main Gain")
+      units.set_param(delayID, 'feedback', 0.9)
+      units.set_param(delayID, 'time', 500)
+      units.set_param(delayID, 'mix', 0.4)
 
+      // for UI: set nicer names
+      units.set_title(wavetableID, 'Wave Table')
+      units.set_title(plateID, 'Plate (ish) Reverb')
+      units.set_title(lpfID, 'Lowpass Filter (moog-style)')
+      units.set_title(hpfID, 'Highpass Filter')
+      units.set_title(scopeID, 'Output')
+      units.set_title(wavescopeID, 'Wave Table Output')
+      units.set_title(snareGainID, 'Static Gain (for snare-like sound)')
+      units.set_title(kickBassID, 'Bass (for kick')
+      units.set_title(kickGainID, 'Bass Gain (for kick)')
+      units.set_title(drumscopeID, 'Drums & Bass?')
+      units.set_title(outID, 'Main Gain')
 
-  // make UI
-  document.body.appendChild(units.genui(wavetableID))
-  document.body.appendChild(units.genui(wavescopeID))
-  document.body.appendChild(units.genui(pitchID))
-  document.body.appendChild(units.genui(snareGainID))
-  document.body.appendChild(units.genui(kickBassID))
-  document.body.appendChild(units.genui(kickGainID))
-  document.body.appendChild(units.genui(drumscopeID))
-  document.body.appendChild(units.genui(lpfID))
-  document.body.appendChild(units.genui(outID))
-  document.body.appendChild(units.genui(scopeID))
+      // make UI
+      document.body.appendChild(units.genui(wavetableID))
+      document.body.appendChild(units.genui(wavescopeID))
+      document.body.appendChild(units.genui(pitchID))
+      document.body.appendChild(units.genui(snareGainID))
+      document.body.appendChild(units.genui(kickBassID))
+      document.body.appendChild(units.genui(kickGainID))
+      document.body.appendChild(units.genui(drumscopeID))
+      document.body.appendChild(units.genui(lpfID))
+      document.body.appendChild(units.genui(outID))
+      document.body.appendChild(units.genui(plateID))
+      document.body.appendChild(units.genui(hpfID))
+      document.body.appendChild(units.genui(delayID))
+      document.body.appendChild(units.genui(scopeID))
 
-  // connect things
-  units.connect(wavetableID, 0, lpfID, 0)
-  units.connect(wavetableID, 0, wavescopeID, 0)
-  units.connect(wavetableID, 0, pitchID, 0)
-  units.connect(lpfID, 0, outID, 0)
-  units.connect(outID, 0, scopeID, 0)
+      // connect things
+      units.connect(wavetableID, 0, lpfID, 0)
+      units.connect(wavetableID, 0, wavescopeID, 0)
+      units.connect(wavetableID, 0, pitchID, 0)
+      units.connect(lpfID, 0, outID, 0)
+      units.connect(hpfID, 0, scopeID, 0)
 
-  units.connect(snareNoiseID, 0, snareGainID, 0)
-  units.connect(snareGainID, 0, lpfID, 0)
-  units.connect(snareGainID, 0, drumscopeID, 0)
+      units.connect(snareNoiseID, 0, snareGainID, 0)
+      units.connect(snareGainID, 0, lpfID, 0)
+      units.connect(snareGainID, 0, drumscopeID, 0)
 
-  units.connect(kickBassID, 0, kickGainID, 0)
-  units.connect(kickGainID, 0, lpfID, 0)
-  units.connect(kickGainID, 0, drumscopeID, 0)
+      units.connect(kickBassID, 0, kickGainID, 0)
+      units.connect(kickGainID, 0, lpfID, 0)
+      units.connect(kickGainID, 0, drumscopeID, 0)
 
-   units.connect(outID, 0, audioOutID, 0)
+      units.connect(outID, 0, hpfID, 0)
+      units.connect(hpfID, 0, delayID, 0)
+      units.connect(delayID, 0, plateID, 0)
+      units.connect(plateID, 0, audioOutID, 0)
 
-  // stuff for demo
+      // stuff for demo
 
-  let demoSong = true
-  let snareOn = false
-  let kickOn = false
+      let demoSong = true
+      let snareOn = false
+      let kickOn = false
 
-  document.getElementById('playdemo').addEventListener('change', e => {
-    demoSong = e.target.checked
-  })
+      document.getElementById('playdemo').addEventListener('change', (e) => {
+        demoSong = e.target.checked
+      })
 
-  // random notes/types
-  setInterval(() => {
-    if (demoSong){
-      units.set_param(wavetableID, "note", getRandomPersianNote(48, 1))
+      // random notes/types
+      setInterval(() => {
+        if (demoSong) {
+          units.set_param(wavetableID, 'note', getRandomPersianNote(48, 1))
+        }
+      }, 1000)
+
+      let i = 0
+
+      setInterval(() => {
+        kickOn = !kickOn
+        snareOn = false
+        i++
+        if (i % 5 === 0) {
+          snareOn = true
+        }
+      }, 100)
+
+      setInterval(() => {
+        if (demoSong) {
+          units.set_param(wavetableID, 'type', Math.random() * 3)
+          units.set_param(snareGainID, 'gain', snareOn ? 64 : 0)
+          units.set_param(kickGainID, 'gain', kickOn ? 64 : 0)
+
+          // this makes a rudimentary kind of kick + bass
+          units.set_param(kickBassID, 'type', 1)
+          setTimeout(() => {
+            units.set_param(kickBassID, 'note', getRandomPersianNote(12, 1))
+            units.set_param(kickBassID, 'type', 0)
+          }, 125)
+        }
+      }, 250)
     }
-  }, 1000)
 
-  let i = 0
-
-  setInterval(() => {
-    kickOn = !kickOn
-    snareOn = false
-    i++
-    if (i % 5 === 0) {
-      snareOn = true
-    }
-  }, 100)
-
-  setInterval(() => {
-    if (demoSong){
-      units.set_param(wavetableID, "type", (Math.random() * 3))
-      units.set_param(snareGainID, "gain", snareOn ? 64 : 0)
-      units.set_param(kickGainID, "gain", kickOn ? 64 : 0)
-
-      // this makes a rudimentary kind of kick + bass
-      units.set_param(kickBassID, "type", 1)
-      setTimeout(() => {
-        units.set_param(kickBassID, "note", getRandomPersianNote(12, 1))
-        units.set_param(kickBassID, "type", 0)
-      }, 125)
-    }
-  }, 250)
-}
-
-// click to play
-document.addEventListener('click', oneTimeClick)
-</script>
+    // click to play
+    document.addEventListener('click', oneTimeClick)
+  </script>
 </html>

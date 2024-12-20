@@ -168,9 +168,19 @@ export default class NullManager {
 
     if (this.units[unitSourceId]?.params[p]) {
       this.units[unitSourceId].params[p].value = value
-      if (this.units[unitSourceId].params[p].input && this.units[unitSourceId].params[p].input.value != value) {
-        this.units[unitSourceId].params[p].input.value = value
-        this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
+
+      if (this.units[unitSourceId].params[p].input){
+        if (this.units[unitSourceId].params[p].input.type === 'checkbox') {
+          if (this.units[unitSourceId].params[p].input.checked != value) {
+            this.units[unitSourceId].params[p].input.checked = value
+            this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
+          }
+        }else{
+          if (this.units[unitSourceId].params[p].input.value != value) {
+            this.units[unitSourceId].params[p].input.value = value
+            this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
+          }
+        }
       }
     }
 
@@ -281,6 +291,34 @@ export default class NullManager {
         for (const param of unit.params) {
           if (param.type === 0) { // bool
 
+          }
+          if (param.type === 0) { // boolean
+            const i = document.createElement('input')
+            param.input = i
+            i.type = 'checkbox'
+            i.max = param.max
+            i.min = param.min
+            i.checked = param.value
+            i.name = param.name
+            i.id = param.name
+
+            if ([1, 2].includes(param.type)) { // int
+              i.step = 1
+            } else {
+              i.step = 0.1
+            }
+
+            i.addEventListener('change', e => {
+              e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.value}`
+              this.set_param(unitSourceId, param.name, e.target.checked)
+            })
+
+            const l = document.createElement('label')
+            l.innerText = `${param.name}: ${param.value ? 'true' : 'false'}`
+            l.htmlFor = param.name
+
+            fs.appendChild(l)
+            fs.appendChild(i)
           }
           if ([1, 2, 3].includes(param.type)) { // numbers
             const i = document.createElement('input')
