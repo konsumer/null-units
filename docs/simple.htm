@@ -1,0 +1,50 @@
+<html>
+  <head>
+    <title>null-units</title>
+    <link rel="icon" type="image/x-icon" href="https://avatars.githubusercontent.com/u/10213618" />
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      fieldset * {
+        display: block;
+      }
+      fieldset label {
+        display: inline-block;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Click to start</p>
+  </body>
+  <script type="module">
+    import NullManager from './null-manager.js'
+
+    // this is just meant for quick lil tests of a single unit
+
+    // click to play
+    async function oneTimeClick() {
+      document.removeEventListener('click', oneTimeClick)
+      document.body.innerHTML = ''
+
+      const units = new NullManager()
+      const audioOutID = 0
+
+      const scopeID = units.scopeNode()
+      const sourceID = units.oscNode()
+
+      document.body.appendChild(units.genui(sourceID))
+      document.body.appendChild(units.genui(scopeID))
+
+      units.set_param(sourceID, 'note', 60)
+
+
+      units.connect(sourceID, 0, scopeID, 0)
+      units.connect(sourceID, 0, audioOutID, 0)
+    }
+
+    // click to play
+    document.addEventListener('click', oneTimeClick)
+  </script>
+</html>

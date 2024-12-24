@@ -1,3 +1,5 @@
+// this is the actual audio worklet that runs the wasm for units
+
 import EasyWasiLite from './EasywasiLite.js'
 
 class NullUnitProcessor extends AudioWorkletProcessor {

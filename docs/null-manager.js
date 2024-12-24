@@ -99,30 +99,6 @@ export default class NullManager {
       console.error(`${unitSourceId}.${paramId} not found.`)
     }
 
-    // params for osc (tester) follow wavetable
-    if (this.units[unitSourceId].name === 'osc') {
-      if (paramId === 0 || paramId === 'type') {
-        // sin/sqr/tri/saw
-        if (Math.floor(value) === 0) {
-          this.units[unitSourceId].audioNode.type = 'sine'
-        }
-        if (Math.floor(value) === 1) {
-          this.units[unitSourceId].audioNode.type = 'square'
-        }
-        if (Math.floor(value) === 2) {
-          this.units[unitSourceId].audioNode.type = 'triangle'
-        }
-        if (Math.floor(value) === 3) {
-          this.units[unitSourceId].audioNode.type = 'sawtooth'
-        }
-      }
-      if (paramId === 1 || paramId === 'note') {
-        // midi note ID
-        this.units[unitSourceId].audioNode.frequency.setValueAtTime(440 * Math.pow(2, (value - 69) / 12), timefromNowInSeconds)
-      }
-      return
-    }
-
     // params for scope look like a normal unit
     if (this.units[unitSourceId].name === 'scope') {
       if (paramId === 'width' || paramId === 0) {
@@ -158,13 +134,37 @@ export default class NullManager {
             this.units[unitSourceId].params[p].input.checked = value
             this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
           }
-        }else{
+        } else {
           if (this.units[unitSourceId].params[p].input.value != value) {
             this.units[unitSourceId].params[p].input.value = value
             this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
           }
         }
       }
+    }
+
+    // params for osc (tester) follow wavetable style
+    if (this.units[unitSourceId].name === 'osc') {
+      if (paramId === 0 || paramId === 'type') {
+        // sin/sqr/tri/saw
+        if (Math.floor(value) === 0) {
+          this.units[unitSourceId].audioNode.type = 'sine'
+        }
+        if (Math.floor(value) === 1) {
+          this.units[unitSourceId].audioNode.type = 'square'
+        }
+        if (Math.floor(value) === 2) {
+          this.units[unitSourceId].audioNode.type = 'triangle'
+        }
+        if (Math.floor(value) === 3) {
+          this.units[unitSourceId].audioNode.type = 'sawtooth'
+        }
+      }
+      if (paramId === 1 || paramId === 'note') {
+        // midi note ID
+        this.units[unitSourceId].audioNode.frequency.setValueAtTime(440 * Math.pow(2, (value - 69) / 12), timefromNowInSeconds)
+      }
+      return
     }
 
     try {
