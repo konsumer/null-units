@@ -45,6 +45,25 @@
       units.connect(sourceID, 0, testID, 0)
       units.connect(testID, 0, scopeID, 0)
       units.connect(testID, 0, audioOutID, 0)
+
+      const rickRoll = [
+          57, 59,
+          74, 71,
+          78, 78, 76,
+
+          57, 59,
+          74, 71,
+          76, 76, 74, 73, 71,
+
+          57, 59,
+          74, 71,
+          74, 76, 73, 69, 69, 76, 74
+      ]
+
+      let pos = 0
+      setInterval(() => {
+        units.set_param(sourceID, 'note',rickRoll[pos++ % rickRoll.length] )
+      }, 500)
     }
 
     // click to play
