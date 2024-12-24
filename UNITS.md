@@ -180,7 +180,41 @@ Usage tips:
 
 The effect can create various lo-fi sounds from subtle vintage digital warmth to extreme destruction. The noise parameter adds character that simulates the behavior of low-quality D/A converters.
 
+## BBD (Bucket Brigade Delay)
 
+A digital recreation of classic analog bucket brigade delay chips, found in vintage delay pedals and chorus effects.
+
+This BBD implementation features:
+
+1. Delay controls:
+   - Time: Delay time (1-1000ms)
+   - Feedback: Amount of signal fed back into the delay line
+   - Dirt: Emulation of analog degradation and artifacts
+
+2. Key characteristics:
+   - Warm, lo-fi analog delay character
+   - Progressive signal degradation with feedback
+   - Subtle analog-style noise and filtering
+   - Smooth time changes without digital artifacts
+
+3. Features:
+   - Linear interpolation for smooth delay time changes
+   - Analog-style soft clipping
+   - Progressive filtering on repeated delays
+   - Noise and grit modeling
+
+Usage tips:
+- For classic slap-back: Short time (50-150ms), low feedback, minimal dirt
+- For warm echoes: Medium time (200-400ms), medium feedback, medium dirt
+- For lo-fi wash: Longer time (500ms+), high feedback, high dirt
+- For subtle thickening: Very short time (10-30ms), low feedback, low dirt
+- For space effects: Long time, high feedback, varying dirt to taste
+
+The BBD emulates the character of analog delay circuits where the audio signal is passed through a series of capacitors, like a bucket brigade passing water. This creates the characteristic warmth and degradation that made these devices popular in classic guitar pedals and studio gear.
+
+The dirt parameter lets you dial in the amount of analog-style character, from subtle warming to more aggressive lo-fi effects. Higher feedback settings will emphasize the degradation as the signal repeats, just like in vintage hardware.
+
+Unlike pristine digital delays, this BBD adds character and "movement" to the sound, making it particularly good for adding depth and vintage charm to any source material.
 
 ### Chorus
 

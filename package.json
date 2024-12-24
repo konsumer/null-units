@@ -22,6 +22,7 @@
     "build:wavefolder": "make docs/units/wavefolder.wasm",
     "build:ringmod": "make docs/units/ringmod.wasm",
     "build:delay": "make docs/units/delay.wasm",
+    "build:bbd": "make docs/units/bbd.wasm",
     "watch": "npx -y nodemon -w units -e 'c h' --exec 'npm run build'",
     "clean": "npx -y rimraf docs/units/*.wasm"
   }
