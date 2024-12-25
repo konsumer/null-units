@@ -23,7 +23,8 @@
     "build:ringmod": "make docs/units/ringmod.wasm",
     "build:delay": "make docs/units/delay.wasm",
     "build:bbd": "make docs/units/bbd.wasm",
+    "native": "cd native && cmake -B build -G Ninja && cmake --build build",
     "watch": "npx -y nodemon -w units -e 'c h' --exec 'npm run build'",
-    "clean": "npx -y rimraf docs/units/*.wasm"
+    "clean": "npx -y rimraf docs/units/*.wasm native/build"
   }
 }
