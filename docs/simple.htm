@@ -39,31 +39,33 @@
       document.body.appendChild(units.genui(testID))
       document.body.appendChild(units.genui(scopeID))
 
-      units.set_param(sourceID, 'note', 60)
-
-
       units.connect(sourceID, 0, testID, 0)
       units.connect(testID, 0, scopeID, 0)
       units.connect(testID, 0, audioOutID, 0)
 
       const rickRoll = [
-          57, 59,
-          74, 71,
-          78, 78, 76,
+          [57, 250], [59, 250],
+          [74, 400], [71, 100],
+          [78, 250], [78, 250], [76, 500],
 
-          57, 59,
-          74, 71,
-          76, 76, 74, 73, 71,
+          [57, 250], [59, 250],
+          [74, 400], [71, 100],
+          [76, 250], [76, 250], [74, 200], [73, 150], [71, 150],
 
-          57, 59,
-          74, 71,
-          74, 76, 73, 69, 69, 76, 74
+          [57, 250], [59, 250],
+          [74, 400], [71, 100],
+          [74, 250], [76, 250], [73, 250],
+          [69, 250], [69, 250], [76, 250], [74, 500]
       ]
 
       let pos = 0
-      setInterval(() => {
-        units.set_param(sourceID, 'note',rickRoll[pos++ % rickRoll.length] )
-      }, 500)
+      function playNext() {
+          if (pos >= rickRoll.length) pos = 0
+          const [note, duration] = rickRoll[pos++]
+          units.set_param(sourceID, 'note', note)
+          setTimeout(playNext, duration * 1.5)
+      }
+      playNext()
     }
 
     // click to play
