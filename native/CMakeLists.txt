@@ -26,6 +26,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(wamr REQUIRED)
 find_package(SoundIo REQUIRED)
 
-add_executable(${PROJECT_NAME} main.c)
+add_executable(${PROJECT_NAME} src/main.c src/null_manager.c)
 target_link_libraries(${PROJECT_NAME} wamr ${SOUNDIO_LIBRARY})
 target_include_directories(${PROJECT_NAME} PRIVATE ${SOUNDIO_INCLUDE_DIR})
