@@ -187,9 +187,9 @@ A digital recreation of classic analog bucket brigade delay chips, found in vint
 This BBD implementation features:
 
 1. Delay controls:
-   - Time: Delay time (1-1000ms)
-   - Feedback: Amount of signal fed back into the delay line
-   - Dirt: Emulation of analog degradation and artifacts
+   - Time: Delay time (1-4000ms)
+   - Feedback: Amount of signal fed back into the delay line (0-127)
+   - Dirt: Emulation of analog degradation and artifacts (0-127)
 
 2. Key characteristics:
    - Warm, lo-fi analog delay character
