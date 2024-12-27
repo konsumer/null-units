@@ -33,19 +33,31 @@
 
       // load some units
       const osc = await units.load('wavetable')
+      const gainOsc = await units.load('gain')
       const scopeOsc = await units.load('scope')
       const pitch = await units.load('pitch')
       const lpf = await units.load('mooglpf')
       const echo = await units.load('bbd')
+      const tr808 = await units.load('tr808')
+      const crush = await units.load('bitcrusher')
       const scopeMain = await units.load('scope')
 
       // set initial value
+      units.set_param(gainOsc, 'gain', 20)
       units.set_param(osc, 'type', 3)
       units.set_param(lpf, 'cutoff', 88)
       units.set_param(lpf, 'resonance', 0.8)
       units.set_param(echo, 'time', 1000)
       units.set_param(echo, 'feedback', 85)
       units.set_param(echo, 'dirt', 25)
+      units.set_param(tr808, 'volume', 100)
+      units.set_param(tr808, 'BD tone', 20)
+      units.set_param(tr808, 'BD decay', 80)
+      units.set_param(tr808, 'SD snappy', 80)
+      units.set_param(crush, 'bits', 3.4)
+      units.set_param(crush, 'rate', 0.8)
+      units.set_param(crush, 'noise', 0)
+      units.set_param(crush, 'mix', 0.4)
 
 
       // connect units
@@ -55,8 +67,13 @@
 
       units.connect(osc, lpf)
       units.connect(lpf, echo)
-      units.connect(echo, audioOut)
-      units.connect(echo, scopeMain)
+      units.connect(echo, gainOsc)
+      units.connect(gainOsc, audioOut)
+      units.connect(gainOsc, scopeMain)
+
+      units.connect(tr808, scopeMain)
+      units.connect(tr808, crush)
+      units.connect(crush, audioOut)
 
 
       // create UI
@@ -69,14 +86,25 @@
 
       // play random persian-scale song
       setInterval(() => {
-        units.set_param(osc, 'note', getRandomPersianNote(36))
+        units.set_param(osc, 'note', getRandomPersianNote(60, 1))
       }, 800)
 
-      // move cutoff
+      // move LPF cutoff to make things trippy
       let i = 0
       setInterval(() => {
         units.set_param(lpf, 'cutoff', 36 + (i++ % 36))
       }, 200)
+
+      // drum beat
+      setInterval(() => {
+        setTimeout(() => units.set_param(tr808, 'note', 38), 500) // SD
+        units.set_param(tr808, 'note', 35) // BD
+      }, 1000)
+      setTimeout(() => {
+        setInterval(() => {
+          units.set_param(tr808, 'note', 42) // CH
+        }, 500)
+      }, 250)
     }
 
     // click to play
