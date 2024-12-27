@@ -39,7 +39,7 @@
       const lpf = await units.load('mooglpf')
       const echo = await units.load('bbd')
       const tr808 = await units.load('tr808')
-      const crush = await units.load('bitcrusher')
+      const distortion = await units.load('distortion')
       const scopeMain = await units.load('scope')
 
       // set initial value
@@ -50,11 +50,6 @@
       units.set_param(echo, 'time', 1000)
       units.set_param(echo, 'feedback', 85)
       units.set_param(echo, 'dirt', 25)
-      units.set_param(crush, 'bits', 3.4)
-      units.set_param(crush, 'rate', 0.8)
-      units.set_param(crush, 'noise', 0)
-      units.set_param(crush, 'mix', 0.4)
-
 
       // connect units
       // use source for analysis (better results)
@@ -68,8 +63,8 @@
       units.connect(gainOsc, scopeMain)
 
       units.connect(tr808, scopeMain)
-      units.connect(tr808, crush)
-      units.connect(crush, audioOut)
+      units.connect(tr808, distortion)
+      units.connect(distortion, audioOut)
 
 
       // create UI
@@ -93,14 +88,21 @@
 
       // drum beat
       setInterval(() => {
-        setTimeout(() => units.set_param(tr808, 'note', 38), 500) // SD
+        setTimeout(() => units.set_param(tr808, 'note', 38), 1000) // SD
         units.set_param(tr808, 'note', 35) // BD
-      }, 1000)
+        let counter = 8
+        const i = setInterval(() => {
+          units.set_param(tr808, 'note', 42) // CH
+          if (counter--){
+            clearInterval(i)
+          }
+        }, 100)
+      }, 2000)
       setTimeout(() => {
         setInterval(() => {
           units.set_param(tr808, 'note', 42) // CH
-        }, 500)
-      }, 250)
+        }, 1000)
+      }, 500)
     }
 
     // click to play
