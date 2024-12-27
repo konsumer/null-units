@@ -1,7 +1,6 @@
-// this is a pseudo-unit that detects closes note
-// this is not super-accurate for lower frequencies
+// this is a pitch-detector unit
 
-export default class PitchDetector {
+class PitchDetector {
   constructor(audioContext) {
     this.audioContext = audioContext
     this.analyser = this.audioContext.createAnalyser()
@@ -22,10 +21,6 @@ export default class PitchDetector {
       midiNote: 0
     }
     this.isRunning = false
-  }
-
-  connect(source) {
-    source.connect(this.analyser)
   }
 
   getFrequency() {
@@ -69,29 +64,73 @@ export default class PitchDetector {
     }
   }
 
-  start() {
-    this.isRunning = true
-    this.update()
-  }
-
   // Main update function
   update() {
-    if (this.isRunning) {
-      const frequency = this.getFrequency()
-      if (frequency > 0) {
-        this.note = this.getNote(frequency)
-      } else {
-        this.note = {
-          note: 'UNKOWN',
-          octave: 0,
-          frequency: 0,
-          midiNote: 0
-        }
+    const frequency = this.getFrequency()
+    if (frequency > 0) {
+      this.note = this.getNote(frequency)
+    } else {
+      this.note = {
+        note: 'UNKOWN',
+        octave: 0,
+        frequency: 0,
+        midiNote: 0
       }
     }
     if (this.onchange) {
       this.onchange(this.note)
     }
-    requestAnimationFrame(() => this.update())
+  }
+}
+
+export default class UnitPitch {
+  constructor(manager) {
+    this.manager = manager
+    this.name = 'pitch'
+    this.detector = new PitchDetector(manager.audioCtx)
+    this.audioNode = this.detector.analyser
+  }
+
+  // load unit, and return info about it
+  load() {
+    this.loaded = true
+  }
+
+  // unload unit
+  unload() {}
+
+  // set a param
+  set_param(paramId, value, timefromNowInSeconds=0) {
+    // no params
+  }
+
+  // get a param
+  get_param(paramId) {
+    // no params
+  }
+
+  update() {
+    if (this.html) {
+      const pre = this.html.querySelector('pre')
+      if (pre) {
+        this.detector.update()
+        pre.innerHTML = JSON.stringify(this.detector.note, null, 2)
+      }
+    }
+  }
+
+  // web only: generate a UI
+  ui() {
+    const f = document.createElement('form')
+    f.id = `unit_${this.id}`
+    const fs = document.createElement('fieldset')
+    f.appendChild(fs)
+    const l = document.createElement('legend')
+    l.innerText = `${this.title || this.name} (${this.id})`
+    fs.appendChild(l)
+    fs.appendChild(document.createElement('pre'))
+
+    this.html = f
+    return this.html
   }
 }

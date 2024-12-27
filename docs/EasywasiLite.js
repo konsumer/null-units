@@ -1,6 +1,7 @@
 // this is similar to https://github.com/konsumer/easywasi
 // but has no actual file-access and doesn't use TextEncoder/TextDecoder
 // it is designed for use in constrained runtime environments (AudioWorklets, etc)
+// TODO: I should probly add these chnages back to plain easywasi
 
 const defs = {
   "CLOCKID_MONOTONIC": 1,

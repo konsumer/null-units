@@ -1,5 +1,13 @@
-// this is a pseudo-unit that makes an aoscilloscope
-export default class Oscilloscope {
+// this numeric lookip allows params that look similar to othe untits
+const paramMap = {
+  0: 'backgroundColor',
+  1: 'lineColor',
+  2: 'zeroColor',
+  3: 'lineWidth',
+  4: 'canvas'
+}
+
+class Oscilloscope {
   constructor (audioContext) {
     this.audioContext = audioContext
     this.canvas = null
@@ -30,29 +38,8 @@ export default class Oscilloscope {
     return this.canvasElement
   }
 
-  get destination () {
-    return this.analyser
-  }
-
-  start () {
-    if (!this.canvas || !this.ctx) {
-      throw new Error('Canvas must be set before starting oscilloscope')
-    }
-    this.isRunning = true
-    this.draw()
-  }
-
-  stop () {
-    this.isRunning = false
-  }
-
   draw () {
-    if (!this.isRunning) return
-
     const { ctx, canvas, dataArray, bufferLength, analyser } = this
-
-    // Request next animation frame
-    requestAnimationFrame(() => this.draw())
 
     // Get waveform data
     analyser.getFloatTimeDomainData(dataArray)
@@ -91,5 +78,73 @@ export default class Oscilloscope {
     }
 
     ctx.stroke()
+  }
+}
+
+// this is a an oscilloscope unit
+export default class UnitScope {
+  constructor(manager, canvas = document.createElement('canvas')) {
+    this.manager = manager
+    this.name = 'scope'
+    this.params = []
+    this.scope = new Oscilloscope(manager.audioCtx)
+    this.scope.canvas = canvas
+    this.audioNode = this.scope.analyser
+  }
+
+  // load unit, and return info about it
+  async load() {
+    this.loaded = true
+  }
+
+  // unload unit
+  unload() {
+    // nothing
+  }
+
+  // set a param
+  async set_param(paramId, value, timefromNowInSeconds=0) {
+    const p = Number.isFinite(paramId) ? paramMap[paramId] : paramId
+    const pi = this.params.findIndex(pd => pd.name === p)
+
+    if (pi === -1) {
+      return
+    }
+
+    setTimeout(() => {
+      this.params[pi].value = value
+      this.scope[p] = value
+    }, timefromNowInSeconds/1000)
+  }
+
+  // get a param
+  async get_param(paramId) {
+    const p = Number.isFinite(paramId) ? paramMap[paramId] : paramId
+    const pi = this.params.findIndex(pd => pd.name === p)
+
+    if (pi === -1) {
+      return
+    }
+
+    return this.params[pi].value
+  }
+
+  // web only: generate a UI
+  ui() {
+    const f = document.createElement('form')
+    f.id = `unit_${this.id}`
+    const fs = document.createElement('fieldset')
+    f.appendChild(fs)
+    const l = document.createElement('legend')
+    l.innerText = `${this.title || this.name} (${this.id})`
+    fs.appendChild(l)
+    fs.appendChild(this.scope.canvas)
+
+    this.html = f
+    return this.html
+  }
+
+  update() {
+    this.scope.draw()
   }
 }

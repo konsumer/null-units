@@ -1,343 +1,116 @@
 // this is the unit-management API
 // this will also be implemented in C, later (for native)
 
-import Oscilloscope from './Oscilloscope.js'
-import PitchDetector from './PitchDetector.js'
 import waveGenerator from './wave-generator.js'
+import UnitIo from './unit-types/UnitIo.js'
+import UnitOscillator from './unit-types/UnitOscillator.js'
+import UnitPitch from './unit-types/UnitPitch.js'
+import UnitScope from './unit-types/UnitScope.js'
+import UnitWasm from './unit-types/UnitWasm.js'
 
 // this is the location of worker JS file
 const dirWorker = import.meta.url.split('/').slice(0, -1).join('/')
 
-// this is location of units
+// this is location of wasm units
 const dirUnits = `${dirWorker}/units`
 
+// this is the interface to the null-unit system that manages all the units
 export default class NullManager {
   constructor (audioCtx) {
     this.audioCtx = audioCtx || new AudioContext()
-    this.audioCtx.resume()
 
     // unit 0 is audio-out
     this.units = [
-      { name: 'out', channelsIn: 1, channelsOut: 0, audioNode: this.audioCtx.destination }
+      new UnitIo(this, dirWorker)
     ]
 
-    // generate some initial mini-samples
+    // each connection
+    this.connections = []
+
+    // generate some shared mini-samples (float[256] basic waves)
     this.samples = [
-      waveGenerator(0),
-      waveGenerator(1),
-      waveGenerator(2),
-      waveGenerator(3)
+      waveGenerator(0), // sin
+      waveGenerator(1), // sqr
+      waveGenerator(2), // tri
+      waveGenerator(3)  // saw
     ]
   }
 
-  async load (name) {
+  // load a wasm unit
+  async load(name) {
+    if (!this.units[0].loaded) {
+      await this.units[0].load(this)
+    }
     const nextID = this.units.length
-
-    const newUnit = {
-      name,
-      params: []
+    switch (name) {
+      case 'osc': this.units.push(new UnitOscillator(this)); break
+      case 'scope': this.units.push(new UnitScope(this)); break
+      case 'pitch': this.units.push(new UnitPitch(this)); break
+      default: this.units.push(new UnitWasm(this, name, dirUnits)); break
     }
-
-    // add it quickly, so others know the next ID
-    this.units.push(newUnit)
-
-    await this.audioCtx.audioWorklet.addModule(`${dirWorker}/unit-processor.js`)
-    newUnit.audioNode = new AudioWorkletNode(this.audioCtx, 'null-unit')
-
-    const bytes = await fetch(`${dirUnits}/${name}.wasm`).then(r => r.arrayBuffer())
-
-    // send samples to unit
-    for (const index in this.samples) {
-      newUnit.audioNode.port.postMessage({ type: 'set_data', sample: this.samples[index], index })
-    }
-
-    // wait for info
-    // TODO: this could be more robust, like a promise-based send/retval thing
-    await new Promise((resolve, reject) => {
-      newUnit.audioNode.port.onmessage = async e => {
-        if (e?.data?.type === 'info' && e.data.id === nextID) {
-          newUnit.name = e.data.info.name
-          newUnit.channelsIn = e.data.info.channelsIn
-          newUnit.channelsOut = e.data.info.channelsOut
-          newUnit.params = e.data.info.params
-          // console.log('unit loaded', newUnit)
-          resolve()
-        }
-      }
-      newUnit.audioNode.port.postMessage({ type: 'load', bytes, id: nextID })
-    })
-
+    this.units[nextID].id = nextID
+    await this.units[nextID].load()
     return nextID
   }
 
-  unload (unitId) {
-    // TODO: IDs need to stay the same, so delete (unconnecting it) and set position to undefined
-  }
-
-  connect (unitSourceId, unitSourcePort, unitDestinationId, unitDestinationPort) {
-    this.units[unitSourceId].audioNode.connect(this.units[unitDestinationId].audioNode, unitSourcePort, unitDestinationPort)
-  }
-
-  disconnect (unitSourceId, unitSourcePort, unitDestinationId, unitDestinationPort) {
+  // disconnect all connections for a unit, and unload it
+  unload(unitId) {
     // TODO
   }
 
-  set_param (unitSourceId, paramId, value, timefromNowInSeconds = 0) {
-    // pitchdetector has no options
-    if (this.units[unitSourceId].name === 'pitchdetect') {
-      return
-    }
-
-    let p = -1
-    try {
-      // allow string paramId for convenience
-      p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
-      if (p === -1) {
-        throw new Error()
-      }
-    } catch (e) {
-      console.error(`${unitSourceId}.${paramId} not found.`)
-    }
-
-    // params for scope look like a normal unit
-    if (this.units[unitSourceId].name === 'scope') {
-      if (paramId === 'width' || paramId === 0) {
-        this.units[unitSourceId].scope.canvas.width = value
-      }
-      if (paramId === 'height' || paramId === 1) {
-        this.units[unitSourceId].scope.canvas.height = value
-      }
-      if (paramId === 'backgroundColor' || paramId === 2) {
-        this.units[unitSourceId].scope.backgroundColor = value
-      }
-      if (paramId === 'lineColor' || paramId === 3) {
-        this.units[unitSourceId].scope.lineColor = value
-      }
-      if (paramId === 'zeroColor' || paramId === 4) {
-        this.units[unitSourceId].scope.zeroColor = value
-      }
-      if (paramId === 'lineWidth' || paramId === 5) {
-        this.units[unitSourceId].scope.lineWidth = value
-      }
-      if (paramId === 'canvas' || paramId === 6) {
-        this.units[unitSourceId].scope.canvas = value
-      }
-      return
-    }
-
-    if (this.units[unitSourceId]?.params[p]) {
-      this.units[unitSourceId].params[p].value = value
-
-      if (this.units[unitSourceId].params[p].input){
-        if (this.units[unitSourceId].params[p].input.type === 'checkbox') {
-          if (this.units[unitSourceId].params[p].input.checked != value) {
-            this.units[unitSourceId].params[p].input.checked = value
-            this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
-          }
-        } else {
-          if (this.units[unitSourceId].params[p].input.value != value) {
-            this.units[unitSourceId].params[p].input.value = value
-            this.units[unitSourceId].params[p].input.dispatchEvent(new Event('change'))
-          }
-        }
-      }
-    }
-
-    // params for osc (tester) follow wavetable style
-    if (this.units[unitSourceId].name === 'osc') {
-      if (paramId === 0 || paramId === 'type') {
-        // sin/sqr/tri/saw
-        if (Math.floor(value) === 0) {
-          this.units[unitSourceId].audioNode.type = 'sine'
-        }
-        if (Math.floor(value) === 1) {
-          this.units[unitSourceId].audioNode.type = 'square'
-        }
-        if (Math.floor(value) === 2) {
-          this.units[unitSourceId].audioNode.type = 'triangle'
-        }
-        if (Math.floor(value) === 3) {
-          this.units[unitSourceId].audioNode.type = 'sawtooth'
-        }
-      }
-      if (paramId === 1 || paramId === 'note') {
-        // midi note ID
-        this.units[unitSourceId].audioNode.frequency.setValueAtTime(440 * Math.pow(2, (value - 69) / 12), timefromNowInSeconds)
-      }
-      return
-    }
-
-    try {
-      setTimeout(() => {
-        this.units[unitSourceId].audioNode.port.postMessage({ id: unitSourceId, type: 'param_set', paramID: p, value })
-      }, timefromNowInSeconds * 1000)
-    } catch (e) {
-      console.error(`${unitSourceId}.${paramId} not found.`)
+  // connect a port of a unit to another
+  connect(unitId, otherUnitId, portId=0, otherPortId=0) {
+    if (this.units[unitId]?.audioNode && this.units[otherUnitId]?.audioNode) {
+      this.units[unitId].audioNode.connect(this.units[otherUnitId].audioNode, portId, otherPortId)
     }
   }
 
-  async get_param (unitSourceId, paramId) {
-    try {
-      // allow string paramId for convenience
-      const p = typeof paramId === 'string' ? this.units[unitSourceId].params.findIndex(pi => pi.name === paramId) : paramId
-      if (p === -1) {
-        throw new Error()
+  // disconnect a connection of a unit
+  disconnect(unitId, otherUnitId, portId = 0, otherPortId = 0) {
+    // TODO
+  }
+
+  // set a param of a unit
+  set_param(unitId, paramId, value) {
+    if (this.units[unitId] && this.units[unitId].set_param) {
+      this.units[unitId].set_param(paramId, value)
+    }
+  }
+
+  // get a param of a unit
+  async get_param(unitId, paramId) {
+    if (this.units[unitId] && this.units[unitId].get_param) {
+      return this.units[unitId].get_param(paramId)
+    }
+  }
+
+  // called on each frame for things that draw
+  update() {
+    for (const unit of this.units) {
+      if (unit.update) {
+        unit.update()
       }
-    } catch (e) {
-      console.error(`${unitSourceId}.${paramId} not found.`)
     }
+    requestAnimationFrame(this.update.bind(this))
   }
 
-  // these are web-specific
-
-  // set the title of box for UI
-  set_title (unitSourceId, title) {
-    this.units[unitSourceId].title = title
+  // set the title of a UI, do this before you call ui()
+  setTitle(unitId, title) {
+    this.units[unitId].title = title
   }
 
-  // generate a scope
-  // doesn't output canvas (use genui)
-  scopeNode () {
-    const nextID = this.units.length
-    const scope = new Oscilloscope(this.audioCtx)
-    scope.canvas = document.createElement('canvas')
-    scope.start()
-
-    const params = [
-      { "name": "width"},
-      { "name": "height"},
-      { "name": "backgroundColor"},
-      { "name": "lineColor"},
-      { "name": "zeroColor"},
-      { "name": "lineWidth"},
-      { "name": "canvas"},
-    ]
-    this.units.push({ name: 'scope', params, channelsIn: 1, channelsOut: 0, scope, audioNode: scope.destination })
-    // TODO: add params that look like units
-    return nextID
-  }
-
-  // tester node that creates an oscillator
-  oscNode () {
-    const nextID = this.units.length
-    const audioNode = this.audioCtx.createOscillator()
-    const params = [
-      { "type": 1, "min": 0, "max": 3, "value": 0, "name": "type"},
-      { "type": 3, "min": 0, "max": 127, "value": 0, "name": "note" }
-    ]
-    this.units.push({ name: 'osc', channelsIn: 0, channelsOut: 1, audioNode, params})
-    audioNode.start()
-    return nextID
-  }
-
-  // detect pitch/note of incoming data
-  pitchNode () {
-    const nextID = this.units.length
-    const detector = new PitchDetector(this.audioCtx)
-    detector.start()
-    const params = []
-    this.units.push({ name: 'pitchdetect', params, channelsIn: 1, channelsOut: 0, detector, audioNode: detector.analyser })
-    return nextID
-  }
-
-  get_info(unitSourceId) {
-    return this.units[unitSourceId]
-  }
-
-  // this willl return a form DOM object that can be used to control a unit
-  genui (unitSourceId) {
-    const f = document.createElement('form')
-    f.id = `unit_${unitSourceId}`
-
-    const unit = this.units[unitSourceId]
-    if (!unit || unit.name === 'out') {
-      return f
-    }
-
-    const fs = document.createElement('fieldset')
-    f.appendChild(fs)
-    const l = document.createElement('legend')
-    l.innerText = `${unit.title || unit.name} (${unitSourceId})`
-    fs.appendChild(l)
-
-    switch (unit.name) {
-      case 'scope':
-        fs.appendChild(unit.scope.canvas)
-        break
-
-      case 'pitchdetect':
-        const p = document.createElement('pre')
-        p.className = 'pitchdetector'
-        unit.detector.onchange = (info) => {
-          p.innerHTML = JSON.stringify(info, null, 2)
+  // web-only: generate a UI for interacting with a unit (or all units)
+  ui(unitId) {
+    const out = document.createElement('div')
+    if (typeof unitId === 'undefined') {
+      for (const unit of this.units) {
+        if (unit.ui) {
+          out.appendChild(unit.ui())
         }
-        fs.appendChild(p)
-        break
-
-      default:
-        for (const param of unit.params) {
-          if (param.type === 0) { // bool
-
-          }
-          if (param.type === 0) { // boolean
-            const i = document.createElement('input')
-            param.input = i
-            i.type = 'checkbox'
-            i.max = param.max
-            i.min = param.min
-            i.checked = param.value
-            i.name = param.name
-            i.id = param.name
-
-            if ([1, 2].includes(param.type)) { // int
-              i.step = 1
-            } else {
-              i.step = 0.1
-            }
-
-            i.addEventListener('change', e => {
-              e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.value}`
-              this.set_param(unitSourceId, param.name, e.target.checked)
-            })
-
-            const l = document.createElement('label')
-            l.innerText = `${param.name}: ${param.value ? 'true' : 'false'}`
-            l.htmlFor = param.name
-
-            fs.appendChild(l)
-            fs.appendChild(i)
-          }
-          if ([1, 2, 3].includes(param.type)) { // numbers
-            const i = document.createElement('input')
-            param.input = i
-            i.type = 'range'
-            i.max = param.max
-            i.min = param.min
-            i.value = param.value
-            i.name = param.name
-            i.id = param.name
-
-            if ([1, 2].includes(param.type)) { // int
-              i.step = 1
-            } else {
-              i.step = 0.1
-            }
-
-            i.addEventListener('change', e => {
-              e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.value}`
-              this.set_param(unitSourceId, param.name, e.target.value)
-            })
-
-            const l = document.createElement('label')
-            l.innerText = `${param.name}: ${param.value}`
-            l.htmlFor = param.name
-
-            fs.appendChild(l)
-            fs.appendChild(i)
-          }
-        }
+      }
+    } else if (this.units[unitId]?.ui) {
+      out.appendChild(this.units[unitId].ui())
     }
-
-    return f
+    return out
   }
 }

@@ -1,0 +1,12 @@
+ body {
+   font-family: sans-serif;
+ }
+
+ fieldset * {
+   display: block;
+ }
+
+ fieldset label {
+   display: inline-block;
+   user-select: none;
+ }

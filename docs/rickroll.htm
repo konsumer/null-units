@@ -10,7 +10,7 @@
   <script type="module">
     import NullManager from './null-manager.js'
 
-    // This is a very simple exmaple of using null-units
+    // This will play chorus-melody of "never gonna give you up"
 
     // click to play
     async function oneTimeClick() {
@@ -25,8 +25,8 @@
       const scope = await units.load('scope')
       const pitch = await units.load('pitch')
 
-      // set some initial params
-      units.set_param(osc, 'note', 60) // middle-C
+      // set initial value
+      units.set_param(osc, 'type', 3)
 
       // connect units
       units.connect(osc, audioOut)
@@ -38,6 +38,30 @@
 
       // update UI when manager gets a chance
       requestAnimationFrame(() => units.update())
+
+      const rickRoll = [
+        [57, 250], [59, 250],
+        [74, 400], [71, 100],
+        [78, 250], [78, 250], [76, 500],
+
+        [57, 250], [59, 250],
+        [74, 400], [71, 100],
+        [76, 250], [76, 250], [74, 200], [73, 150], [71, 150],
+
+        [57, 250], [59, 250],
+        [74, 400], [71, 100],
+        [74, 250], [76, 250], [73, 250],
+        [69, 250], [69, 250], [76, 250], [74, 500]
+      ]
+
+      let pos = 0
+      function playNext() {
+        if (pos >= rickRoll.length) pos = 0
+        const [note, duration] = rickRoll[pos++]
+        units.set_param(osc, 'note', note)
+        setTimeout(playNext, duration * 1.5)
+      }
+      playNext()
     }
 
     // click to play
