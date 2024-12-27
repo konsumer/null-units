@@ -1,305 +1,331 @@
-// this is an exmaple unit that shows composite synthesis.
-// it emulates the full sound-engine of the Roland 808 drum machine
+// example of a composite-synth that can make drum sounds (similar to TR808)
 
 #include "null-unit.h"
-#include <stdlib.h>
-#include <math.h>
 
 static NullUnitnInfo unitInfo;
 
-// Parameter indices
-#define PARAM_COUNT 9
-#define PARAM_NOTE     0
-#define PARAM_VOLUME   1
-#define PARAM_BD_TONE  2
-#define PARAM_BD_DECAY 3
-#define PARAM_SD_TONE  4
-#define PARAM_SD_SNAPPY 5
-#define PARAM_CY_TONE  6
-#define PARAM_CY_DECAY 7
-#define PARAM_OH_DECAY 8
+// the number of params this can receive
+#define PARAM_COUNT 1
+#define PARAM_NOTE 0
 
-int main(int argc, char *argv[]) {
-    NullUnitParamInfo* params = malloc(PARAM_COUNT * sizeof(NullUnitParamInfo));
+// Oscillator types
+typedef enum {
+  OSC_SINE,
+  OSC_TRIANGLE,
+  OSC_SAWTOOTH,
+  OSC_NOISE
+} OscType;
 
-    unitInfo = (NullUnitnInfo) {
-        .name = "tr808",
-        .channelsIn = 0,  // No input needed
-        .channelsOut = 2, // Stereo output
-        .paramCount = PARAM_COUNT,
-        .params = params
-    };
+// Drum voice types
+typedef enum {
+  VOICE_BD, // Bass Drum
+  VOICE_SD, // Snare Drum
+  VOICE_CH, // Closed Hat
+  VOICE_OH, // Open Hat
+  VOICE_CL, // Clap
+  VOICE_CP, // Cowbell
+  VOICE_RS, // Rim Shot
+  VOICE_CY, // Cymbal
+  VOICE_COUNT
+} VoiceType;
 
-    // Setup all parameters
-    gen_midi_float("note", &unitInfo.params[PARAM_NOTE]);
-    gen_midi_float("volume", &unitInfo.params[PARAM_VOLUME]);
-    gen_midi_float("BD tone", &unitInfo.params[PARAM_BD_TONE]);
-    gen_midi_float("BD decay", &unitInfo.params[PARAM_BD_DECAY]);
-    gen_midi_float("SD tone", &unitInfo.params[PARAM_SD_TONE]);
-    gen_midi_float("SD snappy", &unitInfo.params[PARAM_SD_SNAPPY]);
-    gen_midi_float("CY tone", &unitInfo.params[PARAM_CY_TONE]);
-    gen_midi_float("CY decay", &unitInfo.params[PARAM_CY_DECAY]);
-    gen_midi_float("OH decay", &unitInfo.params[PARAM_OH_DECAY]);
-
-    return 0;
-}
-
-void destroy() {
-    for (int i = 0; i < PARAM_COUNT; i++) {
-        free(unitInfo.params[i].name);
-    }
-    free(unitInfo.params);
-}
-
-// State variables for each voice
+// Voice parameters
 typedef struct {
-    float phase;         // Oscillator phase
-    float envelope;      // Amplitude envelope
-    float pitch_env;     // Pitch envelope
-    float noise_env;     // Noise envelope
-    float trigger;       // Trigger state
-    float last_output;   // For filters
-    float noise_state;   // Noise generator state
-} DrumVoice;
+  float baseFreq;   // Base frequency
+  float pitchDecay; // Pitch envelope decay time
+  float ampDecay;   // Amplitude decay time
+  float pitchMod;   // Pitch modulation amount
+  float noiseMix;   // Mix of noise (0 = none, 1 = all noise)
+  float distortion; // Distortion amount
+  OscType oscType;  // Oscillator type
+  bool useFilter;   // Whether to use filter
+  float filterFreq; // Filter frequency
+  float filterQ;    // Filter resonance
+} VoiceParams;
 
-static DrumVoice voices[16]; // One for each possible drum sound
+// Voice state
+typedef struct {
+  float pitchEnv;     // Current pitch envelope value
+  float ampEnv;       // Current amplitude envelope value
+  float phase;        // Phase for oscillator
+  float velocity;     // Current velocity (0.0-1.0)
+  bool triggered;     // Whether voice was triggered
+  float filterState;  // Simple filter state
+  VoiceParams params; // Parameters for this voice
+} VoiceState;
 
-// Utility functions
-static float fast_sin(float x) {
-    x = fmod(x, 2.0f * M_PI);
-    return sinf(x);
+// Global state for all voices
+static VoiceState voices[VOICE_COUNT] = {};
+
+// Simple one-pole filter
+float filter(float input, float *state, float freq, float sampleRate) {
+  float alpha = freq / (freq + sampleRate);
+  *state = *state + alpha * (input - *state);
+  return *state;
 }
 
-static float noise() {
-    return (float)rand() / RAND_MAX * 2.0f - 1.0f;
+// Process a single voice
+float process_voice(VoiceState *voice, float sampleRate) {
+  if (!voice->triggered && voice->ampEnv < 0.001f) {
+    return 0.0f;
+  }
+
+  // Update envelopes
+  voice->pitchEnv = nu_envelope(&voice->pitchEnv, 0.0f, voice->params.pitchDecay, sampleRate);
+  voice->ampEnv = nu_envelope(&voice->ampEnv, 0.0f, voice->params.ampDecay, sampleRate);
+
+  // Calculate frequency with pitch envelope
+  float freq = voice->params.baseFreq + (voice->params.pitchMod * voice->pitchEnv);
+
+  // Update phase
+  voice->phase += freq * 2.0f * M_PI / sampleRate;
+
+  // Generate core sound
+  float osc = 0.0f;
+  switch (voice->params.oscType) {
+  case OSC_SINE:
+    osc = nu_sin(voice->phase);
+    break;
+  case OSC_TRIANGLE:
+    osc = nu_triangle(voice->phase);
+    break;
+  case OSC_SAWTOOTH:
+    osc = nu_sawtooth(voice->phase);
+    break;
+  case OSC_NOISE:
+    osc = nu_noise();
+    break;
+  }
+
+  // Mix with noise if needed
+  if (voice->params.noiseMix > 0.0f) {
+    osc = osc * (1.0f - voice->params.noiseMix) + nu_noise() * voice->params.noiseMix;
+  }
+
+  // Apply envelope
+  osc *= voice->ampEnv;
+
+  // Apply distortion
+  if (voice->params.distortion > 0.0f) {
+    osc *= (1.0f + voice->params.distortion * osc * osc);
+  }
+
+  // Apply filter if needed
+  if (voice->params.useFilter) {
+    osc = filter(osc, &voice->filterState, voice->params.filterFreq, sampleRate);
+  }
+
+  voice->triggered = false;
+  return osc;
 }
 
-static float envelope(float* env, float attack, float decay, float sampleRate) {
-    if (*env > 0.0f) {
-        *env *= expf(-1.0f / (decay * sampleRate));
-    }
-    return *env;
+// Trigger a voice
+void trigger_voice(VoiceType voice, float velocity) {
+  if (voice >= VOICE_COUNT) {
+    return;
+  }
+  voices[voice].pitchEnv = 1.0f;
+  voices[voice].ampEnv = 1.0f;
+  voices[voice].velocity = velocity;
+  voices[voice].triggered = true;
 }
 
-// Bass Drum
-static float synthesize_bd(DrumVoice* voice, float tone, float decay, float sampleRate) {
-    float freq = 50.0f + tone * 0.5f;
-    float decay_time = 0.1f + decay * 0.01f;
+// called when the unit is loaded, returns the number of params it accepts
+int main(int argc, char *argv[]) {
+  NullUnitParamInfo *params = malloc(PARAM_COUNT * sizeof(NullUnitParamInfo));
 
-    // Trigger logic
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->pitch_env = 1.0f;
-        voice->trigger = 0.0f;
-    }
+  unitInfo = (NullUnitnInfo){
+    .name = "tr808",
+    .channelsIn = 0,
+    .channelsOut = 1,
+    .paramCount = PARAM_COUNT,
+    .params = params
+  };
 
-    // Pitch envelope
-    voice->pitch_env *= expf(-1.0f / (0.01f * sampleRate));
-    float pitch = freq * (1.0f + voice->pitch_env * 2.0f);
+  gen_midi_float("note", &unitInfo.params[PARAM_NOTE]); // f32 0-127 midi frequency
 
-    // Oscillator
-    voice->phase += 2.0f * M_PI * pitch / sampleRate;
-    float osc = fast_sin(voice->phase);
+  // TODO: set these up as params with defaults, and scale better (ms, 127, etc)
 
-    // Amplitude envelope
-    voice->envelope *= expf(-1.0f / (decay_time * sampleRate));
+  voices[VOICE_BD].params = (VoiceParams){
+    .ampDecay = 0.1f,
+    .baseFreq = 55.0f,
+    .distortion = 0.2f,
+    .noiseMix = 0.0f,
+    .oscType = OSC_SINE,
+    .pitchDecay = 0.05f,
+    .pitchMod = 100.0f,
+    .useFilter = false,
+  };
 
-    return osc * voice->envelope;
+  voices[VOICE_SD].params = (VoiceParams){
+    .ampDecay = 0.08f,
+    .baseFreq = 220.0f,
+    .distortion = 0.1f,
+    .filterFreq = 2000.0f,
+    .filterQ = 1.0f,
+    .noiseMix = 0.5f,
+    .oscType = OSC_SINE,
+    .pitchDecay = 0.02f,
+    .pitchMod = 50.0f,
+    .useFilter = true,
+  };
+
+  voices[VOICE_CH].params = (VoiceParams){
+    .ampDecay = 0.03f,
+    .baseFreq = 2500.0f,
+    .distortion = 0.0f,
+    .filterFreq = 8000.0f,
+    .filterQ = 2.0f,
+    .noiseMix = 1.0f,
+    .oscType = OSC_NOISE,
+    .pitchDecay = 0.01f,
+    .pitchMod = 0.0f,
+    .useFilter = true,
+  };
+
+  voices[VOICE_OH].params = (VoiceParams){
+    .ampDecay = 0.3f,
+    .baseFreq = 2500.0f,
+    .distortion = 0.0f,
+    .filterFreq = 8000.0f,
+    .filterQ = 2.0f,
+    .noiseMix = 1.0f,
+    .oscType = OSC_NOISE,
+    .pitchDecay = 0.01f,
+    .pitchMod = 0.0f,
+    .useFilter = true,
+  };
+
+  voices[VOICE_CL].params = (VoiceParams){
+    .ampDecay = 0.15f,
+    .baseFreq = 1500.0f,
+    .distortion = 0.1f,
+    .filterFreq = 1000.0f,
+    .filterQ = 1.5f,
+    .noiseMix = 1.0f,
+    .oscType = OSC_NOISE,
+    .pitchDecay = 0.04f,
+    .pitchMod = 0.0f,
+    .useFilter = true,
+  };
+
+  voices[VOICE_CP].params = (VoiceParams){
+    .ampDecay = 0.15f,
+    .baseFreq = 800.0f,
+    .distortion = 0.1f,
+    .filterFreq = 2000.0f,
+    .filterQ = 1.0f,
+    .noiseMix = 0.0f,
+    .oscType = OSC_TRIANGLE,
+    .pitchDecay = 0.05f,
+    .pitchMod = 20.0f,
+    .useFilter = true,
+  };
+
+  voices[VOICE_RS].params = (VoiceParams){
+    .ampDecay = 0.04f,
+    .baseFreq = 1700.0f,
+    .distortion = 0.3f,
+    .filterFreq = 4000.0f,
+    .filterQ = 1.0f,
+    .noiseMix = 0.3f,
+    .oscType = OSC_SINE,
+    .pitchDecay = 0.01f,
+    .pitchMod = 10.0f,
+    .useFilter = true,
+  };
+
+  voices[VOICE_CY].params = (VoiceParams){
+    .ampDecay = 0.5f,
+    .baseFreq = 3000.0f,
+    .distortion = 0.1f,
+    .filterFreq = 5000.0f,
+    .filterQ = 2.0f,
+    .noiseMix = 1.0f,
+    .oscType = OSC_NOISE,
+    .pitchDecay = 0.1f,
+    .pitchMod = 0.0f,
+    .useFilter = true,
+  };
+
+  return 0;
 }
 
-// Snare Drum
-static float synthesize_sd(DrumVoice* voice, float tone, float snappy, float sampleRate) {
-    float freq = 200.0f + tone * 2.0f;
-    float noise_amount = snappy / 127.0f;
+// called when you plugin is unloaded
+void destroy() {}
 
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->noise_env = 1.0f;
-        voice->trigger = 0.0f;
-    }
-
-    // Oscillator
-    voice->phase += 2.0f * M_PI * freq / sampleRate;
-    float osc = fast_sin(voice->phase);
-
-    // Noise component
-    float noise_sig = noise();
-    voice->noise_env *= expf(-1.0f / (0.1f * sampleRate));
-
-    // Mix oscillator and noise
-    voice->envelope *= expf(-1.0f / (0.1f * sampleRate));
-    return (osc * (1.0f - noise_amount) + noise_sig * noise_amount * voice->noise_env) * voice->envelope;
-}
-
-// Hi-Hat (Closed)
-static float synthesize_ch(DrumVoice* voice, float tone, float sampleRate) {
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->trigger = 0.0f;
-    }
-
-    // Six square waves at different frequencies
-    float freqs[6] = {2000.0f, 3000.0f, 4500.0f, 6000.0f, 8000.0f, 10000.0f};
-    float mix = 0.0f;
-
-    for (int i = 0; i < 6; i++) {
-        voice->phase += 2.0f * M_PI * freqs[i] / sampleRate;
-        mix += (fast_sin(voice->phase) > 0.0f) ? 1.0f : -1.0f;
-    }
-
-    // Short decay
-    voice->envelope *= expf(-1.0f / (0.05f * sampleRate));
-    return (mix / 6.0f) * voice->envelope;
-}
-
-// Open Hi-Hat
-static float synthesize_oh(DrumVoice* voice, float decay, float sampleRate) {
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->trigger = 0.0f;
-    }
-
-    float decay_time = 0.1f + decay * 0.01f;
-    float noise_sig = noise();
-
-    // Longer decay than closed hi-hat
-    voice->envelope *= expf(-1.0f / (decay_time * sampleRate));
-    return noise_sig * voice->envelope;
-}
-
-// Cymbal
-static float synthesize_cy(DrumVoice* voice, float tone, float decay, float sampleRate) {
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->trigger = 0.0f;
-    }
-
-    float decay_time = 0.2f + decay * 0.02f;
-    float noise_sig = noise();
-
-    // High-pass filter simulation
-    float filtered = noise_sig - voice->last_output;
-    voice->last_output = noise_sig;
-
-    voice->envelope *= expf(-1.0f / (decay_time * sampleRate));
-    return filtered * voice->envelope;
-}
-
-// Claves
-static float synthesize_cl(DrumVoice* voice, float sampleRate) {
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->trigger = 0.0f;
-    }
-
-    float freq = 2500.0f;
-    voice->phase += 2.0f * M_PI * freq / sampleRate;
-    float osc = fast_sin(voice->phase);
-
-    // Very short decay
-    voice->envelope *= expf(-1.0f / (0.02f * sampleRate));
-    return osc * voice->envelope;
-}
-
-// Cowbell
-static float synthesize_cb(DrumVoice* voice, float sampleRate) {
-    if (voice->trigger > 0.0f) {
-        voice->envelope = 1.0f;
-        voice->trigger = 0.0f;
-    }
-
-    // Two square waves
-    float freq1 = 540.0f;
-    float freq2 = 800.0f;
-
-    float osc1 = fast_sin(voice->phase);
-    float osc2 = fast_sin(voice->phase * freq2/freq1);
-
-    voice->phase += 2.0f * M_PI * freq1 / sampleRate;
-
-    voice->envelope *= expf(-1.0f / (0.1f * sampleRate));
-    return (osc1 + osc2) * 0.5f * voice->envelope;
-}
-
-// TODO: detect note-chnage better (use set_param)
-static float last_sample_note = -1.0f;
-
+// process a single value, in a 0-255 position frame, return output
 float process(uint8_t position, float input, uint8_t channel, float sampleRate, double currentTime) {
-    float output = 0.0f;
-    float note = unitInfo.params[PARAM_NOTE].value.f;
-    float volume = unitInfo.params[PARAM_VOLUME].value.f / 127.0f;
+  float output = 0.0f;
 
-    // Trigger on note changes
-    if (note != last_sample_note) {
-        // If we see a new note, or if we see the same note after seeing a different note
-        if (note > 0 && (last_sample_note <= 0 || (int)note != (int)last_sample_note)) {
-            switch ((int)note) {
-                case 35:  // BD
-                    voices[0].trigger = 1.0f;
-                    break;
-                case 38:  // SD
-                    voices[1].trigger = 1.0f;
-                    break;
-                case 42:  // CH
-                    voices[2].trigger = 1.0f;
-                    break;
-                case 51:  // OH
-                    voices[3].trigger = 1.0f;
-                    break;
-                case 49:  // CY
-                    voices[4].trigger = 1.0f;
-                    break;
-                case 39:  // CL
-                    voices[5].trigger = 1.0f;
-                    break;
-                case 46:  // CB
-                    voices[6].trigger = 1.0f;
-                    break;
-            }
-        }
-        last_sample_note = note;
+  // Mix all voices
+  for (int i = 0; i < VOICE_COUNT; i++) {
+    output += process_voice(&voices[i], sampleRate);
+  }
+
+  // Prevent clipping
+  output = fmaxf(-1.0f, fminf(1.0f, output));
+
+  return output;
+}
+
+// Get info about the unit
+NullUnitnInfo *get_info() {
+  return &unitInfo;
+}
+
+// set a parameter
+void param_set(uint8_t paramId, NullUnitParamValue *value) {
+  if (paramId >= PARAM_COUNT) {
+    return;
+  }
+  unitInfo.params[paramId].value = *value;
+
+  if (paramId == PARAM_NOTE) {
+    switch ((int)value->f) {
+    case 35: // Acoustic Bass Drum (alternate)
+    case 36: // Bass Drum 1
+      trigger_voice(VOICE_BD, 1.0f);
+      break;
+
+    case 38: // Acoustic Snare
+    case 40: // Electric Snare (alternate)
+      trigger_voice(VOICE_SD, 1.0f);
+      break;
+
+    case 42: // Closed Hi-hat
+    case 44: // Pedal Hi-hat (alternate)
+      trigger_voice(VOICE_CH, 1.0f);
+      break;
+
+    case 46: // Open Hi-hat
+      trigger_voice(VOICE_OH, 1.0f);
+      break;
+
+    case 39: // Hand Clap
+      trigger_voice(VOICE_CL, 1.0f);
+      break;
+
+    case 56: // Cowbell
+      trigger_voice(VOICE_CP, 1.0f);
+      break;
+
+    case 37: // Side Stick/Rim Shot
+      trigger_voice(VOICE_RS, 1.0f);
+      break;
+
+    case 49: // Crash Cymbal
+    case 51: // Ride Cymbal (alternate)
+      trigger_voice(VOICE_CY, 1.0f);
+      break;
     }
-
-    // Process all voices
-    output += synthesize_bd(&voices[0],
-                          unitInfo.params[PARAM_BD_TONE].value.f,
-                          unitInfo.params[PARAM_BD_DECAY].value.f,
-                          sampleRate);
-
-    output += synthesize_sd(&voices[1],
-                          unitInfo.params[PARAM_SD_TONE].value.f,
-                          unitInfo.params[PARAM_SD_SNAPPY].value.f,
-                          sampleRate);
-
-    output += synthesize_ch(&voices[2], 0.0f, sampleRate);
-    output += synthesize_oh(&voices[3],
-                          unitInfo.params[PARAM_OH_DECAY].value.f,
-                          sampleRate);
-    output += synthesize_cy(&voices[4],
-                          unitInfo.params[PARAM_CY_TONE].value.f,
-                          unitInfo.params[PARAM_CY_DECAY].value.f,
-                          sampleRate);
-    output += synthesize_cl(&voices[5], sampleRate);
-    output += synthesize_cb(&voices[6], sampleRate);
-
-    output *= 0.25f * volume;
-
-    if (output > 1.0f) output = 1.0f;
-    if (output < -1.0f) output = -1.0f;
-
-    return output;
+  }
 }
 
-NullUnitnInfo* get_info() {
-    return &unitInfo;
-}
-
-void param_set(uint8_t paramId, NullUnitParamValue* value) {
-    if (paramId >= PARAM_COUNT) return;
-    unitInfo.params[paramId].value = *value;
-}
-
-NullUnitParamValue* param_get(uint8_t paramId) {
-    if (paramId >= PARAM_COUNT) return NULL;
-    return &unitInfo.params[paramId].value;
+// get the current value of a parameter
+NullUnitParamValue *param_get(uint8_t paramId) {
+  if (paramId >= PARAM_COUNT) {
+    return NULL;
+  }
+  return &unitInfo.params[paramId].value;
 }

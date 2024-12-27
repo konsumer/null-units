@@ -146,3 +146,31 @@ void gen_midi_unsigned(char* name, NullUnitParamInfo* out) {
   out->max = v;
   out->name = strdup(name);
 }
+
+// Sound utility functions
+float nu_sin(float x) {
+  return sinf(fmod(x, 2.0f * M_PI));
+}
+
+float nu_triangle(float x) {
+    x = fmod(x, 2.0f * M_PI);     // Normalize to [0, 2π]
+    x *= 1.0f/M_PI;               // Multiply is faster than divide
+    x -= 1.0f;                    // Now in [-1, 1] range
+    return 2.0f * fabsf(x) - 1.0f;
+}
+
+float nu_sawtooth(float x) {
+    x = fmod(x, 2.0f * M_PI);     // Normalize to [0, 2π]
+    return (x * (1.0f/M_PI)) - 1.0f;  // Multiply is faster than divide
+}
+
+float nu_noise() {
+  return (float)rand() / (float)RAND_MAX * 2.0f - 1.0f;
+}
+
+float nu_envelope(float* env, float attack, float decay, float sampleRate) {
+  if (*env > 0.0f) {
+    *env *= expf(-1.0f / (decay * sampleRate));
+  }
+  return *env;
+}
