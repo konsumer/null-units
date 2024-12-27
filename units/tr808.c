@@ -122,65 +122,73 @@ int main(int argc, char *argv[]) {
     // Note parameter
         gen_midi_float("note", &unitInfo.params[PARAM_NOTE]);
 
+        unitInfo.params[PARAM_NOTE] = (NullUnitParamInfo) {
+            .name = "note",
+            .value = {.u = 0},
+            .min = {.u = 0},
+            .max = {.u = 127},
+            .type = NULL_PARAM_U32
+        };
+
         // Bass Drum parameters
-        gen_midi_float("BD amp decay (ms)", &unitInfo.params[PARAM_BD_AMP_DECAY]);
-        gen_midi_float("BD base freq (note)", &unitInfo.params[PARAM_BD_BASE_FREQ]);
+        gen_midi_float("BD amp decay", &unitInfo.params[PARAM_BD_AMP_DECAY]);
+        gen_midi_float("BD base freq", &unitInfo.params[PARAM_BD_BASE_FREQ]);
         gen_midi_float("BD distortion", &unitInfo.params[PARAM_BD_DISTORTION]);
         gen_midi_float("BD noise mix", &unitInfo.params[PARAM_BD_NOISE_MIX]);
-        gen_midi_float("BD pitch decay (ms)", &unitInfo.params[PARAM_BD_PITCH_DECAY]);
+        gen_midi_float("BD pitch decay", &unitInfo.params[PARAM_BD_PITCH_DECAY]);
         gen_midi_float("BD pitch mod", &unitInfo.params[PARAM_BD_PITCH_MOD]);
 
         // Snare Drum parameters
-        gen_midi_float("SD amp decay (ms)", &unitInfo.params[PARAM_SD_AMP_DECAY]);
-        gen_midi_float("SD base freq (note)", &unitInfo.params[PARAM_SD_BASE_FREQ]);
+        gen_midi_float("SD amp decay", &unitInfo.params[PARAM_SD_AMP_DECAY]);
+        gen_midi_float("SD base freq", &unitInfo.params[PARAM_SD_BASE_FREQ]);
         gen_midi_float("SD distortion", &unitInfo.params[PARAM_SD_DISTORTION]);
         gen_midi_float("SD noise mix", &unitInfo.params[PARAM_SD_NOISE_MIX]);
-        gen_midi_float("SD pitch decay (ms)", &unitInfo.params[PARAM_SD_PITCH_DECAY]);
+        gen_midi_float("SD pitch decay", &unitInfo.params[PARAM_SD_PITCH_DECAY]);
         gen_midi_float("SD pitch mod", &unitInfo.params[PARAM_SD_PITCH_MOD]);
-        gen_midi_float("SD filter freq (note)", &unitInfo.params[PARAM_SD_FILTER_FREQ]);
+        gen_midi_float("SD filter freq", &unitInfo.params[PARAM_SD_FILTER_FREQ]);
         gen_midi_float("SD filter Q", &unitInfo.params[PARAM_SD_FILTER_Q]);
 
         // Closed Hat parameters
-        gen_midi_float("CH amp decay (ms)", &unitInfo.params[PARAM_CH_AMP_DECAY]);
-        gen_midi_float("CH base freq (note)", &unitInfo.params[PARAM_CH_BASE_FREQ]);
-        gen_midi_float("CH filter freq (note)", &unitInfo.params[PARAM_CH_FILTER_FREQ]);
+        gen_midi_float("CH amp decay", &unitInfo.params[PARAM_CH_AMP_DECAY]);
+        gen_midi_float("CH base freq", &unitInfo.params[PARAM_CH_BASE_FREQ]);
+        gen_midi_float("CH filter freq", &unitInfo.params[PARAM_CH_FILTER_FREQ]);
         gen_midi_float("CH filter Q", &unitInfo.params[PARAM_CH_FILTER_Q]);
 
         // Open Hat parameters
-        gen_midi_float("OH amp decay (ms)", &unitInfo.params[PARAM_OH_AMP_DECAY]);
-        gen_midi_float("OH base freq (note)", &unitInfo.params[PARAM_OH_BASE_FREQ]);
-        gen_midi_float("OH filter freq (note)", &unitInfo.params[PARAM_OH_FILTER_FREQ]);
+        gen_midi_float("OH amp decay", &unitInfo.params[PARAM_OH_AMP_DECAY]);
+        gen_midi_float("OH base freq", &unitInfo.params[PARAM_OH_BASE_FREQ]);
+        gen_midi_float("OH filter freq", &unitInfo.params[PARAM_OH_FILTER_FREQ]);
         gen_midi_float("OH filter Q", &unitInfo.params[PARAM_OH_FILTER_Q]);
 
         // Clap parameters
-        gen_midi_float("CL amp decay (ms)", &unitInfo.params[PARAM_CL_AMP_DECAY]);
-        gen_midi_float("CL base freq (note)", &unitInfo.params[PARAM_CL_BASE_FREQ]);
+        gen_midi_float("CL amp decay", &unitInfo.params[PARAM_CL_AMP_DECAY]);
+        gen_midi_float("CL base freq", &unitInfo.params[PARAM_CL_BASE_FREQ]);
         gen_midi_float("CL distortion", &unitInfo.params[PARAM_CL_DISTORTION]);
-        gen_midi_float("CL filter freq (note)", &unitInfo.params[PARAM_CL_FILTER_FREQ]);
+        gen_midi_float("CL filter freq", &unitInfo.params[PARAM_CL_FILTER_FREQ]);
         gen_midi_float("CL filter Q", &unitInfo.params[PARAM_CL_FILTER_Q]);
 
         // Cowbell parameters
-        gen_midi_float("CP amp decay (ms)", &unitInfo.params[PARAM_CP_AMP_DECAY]);
-        gen_midi_float("CP base freq (note)", &unitInfo.params[PARAM_CP_BASE_FREQ]);
+        gen_midi_float("CP amp decay", &unitInfo.params[PARAM_CP_AMP_DECAY]);
+        gen_midi_float("CP base freq", &unitInfo.params[PARAM_CP_BASE_FREQ]);
         gen_midi_float("CP distortion", &unitInfo.params[PARAM_CP_DISTORTION]);
-        gen_midi_float("CP filter freq (note)", &unitInfo.params[PARAM_CP_FILTER_FREQ]);
+        gen_midi_float("CP filter freq", &unitInfo.params[PARAM_CP_FILTER_FREQ]);
         gen_midi_float("CP filter Q", &unitInfo.params[PARAM_CP_FILTER_Q]);
         gen_midi_float("CP pitch mod", &unitInfo.params[PARAM_CP_PITCH_MOD]);
 
         // Rim Shot parameters
-        gen_midi_float("RS amp decay (ms)", &unitInfo.params[PARAM_RS_AMP_DECAY]);
-        gen_midi_float("RS base freq (note)", &unitInfo.params[PARAM_RS_BASE_FREQ]);
+        gen_midi_float("RS amp decay", &unitInfo.params[PARAM_RS_AMP_DECAY]);
+        gen_midi_float("RS base freq", &unitInfo.params[PARAM_RS_BASE_FREQ]);
         gen_midi_float("RS distortion", &unitInfo.params[PARAM_RS_DISTORTION]);
-        gen_midi_float("RS filter freq (note)", &unitInfo.params[PARAM_RS_FILTER_FREQ]);
+        gen_midi_float("RS filter freq", &unitInfo.params[PARAM_RS_FILTER_FREQ]);
         gen_midi_float("RS filter Q", &unitInfo.params[PARAM_RS_FILTER_Q]);
         gen_midi_float("RS noise mix", &unitInfo.params[PARAM_RS_NOISE_MIX]);
         gen_midi_float("RS pitch mod", &unitInfo.params[PARAM_RS_PITCH_MOD]);
 
         // Cymbal parameters
-        gen_midi_float("CY amp decay (ms)", &unitInfo.params[PARAM_CY_AMP_DECAY]);
-        gen_midi_float("CY base freq (note)", &unitInfo.params[PARAM_CY_BASE_FREQ]);
+        gen_midi_float("CY amp decay", &unitInfo.params[PARAM_CY_AMP_DECAY]);
+        gen_midi_float("CY base freq", &unitInfo.params[PARAM_CY_BASE_FREQ]);
         gen_midi_float("CY distortion", &unitInfo.params[PARAM_CY_DISTORTION]);
-        gen_midi_float("CY filter freq (note)", &unitInfo.params[PARAM_CY_FILTER_FREQ]);
+        gen_midi_float("CY filter freq", &unitInfo.params[PARAM_CY_FILTER_FREQ]);
         gen_midi_float("CY filter Q", &unitInfo.params[PARAM_CY_FILTER_Q]);
 
         // Initialize BD default values (matching your original values)
@@ -435,7 +443,7 @@ void param_set(uint8_t paramId, NullUnitParamValue *value) {
     unitInfo.params[paramId].value = *value;
 
     if (paramId == PARAM_NOTE) {
-        switch ((int)value->f) {
+        switch (value->u) {
             case 35: // Acoustic Bass Drum (alternate)
             case 36: // Bass Drum 1
                 trigger_voice(VOICE_BD, 1.0f);

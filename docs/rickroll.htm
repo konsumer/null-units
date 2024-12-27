@@ -22,16 +22,19 @@
 
       // load a test oscillator/scope
       const osc = await units.load('osc')
+      const adsr = await units.load('adsr')
       const scope = await units.load('scope')
       const pitch = await units.load('pitch')
 
       // set initial value
-      units.set_param(osc, 'type', 3)
+      units.set_param(osc, 'type', 2)
 
       // connect units
-      units.connect(osc, audioOut)
-      units.connect(osc, scope)
       units.connect(osc, pitch)
+      units.connect(osc, adsr)
+      units.connect(adsr, audioOut)
+      units.connect(adsr, scope)
+
 
       // create UI
       document.body.appendChild(units.ui())
@@ -60,6 +63,8 @@
         const [note, duration] = rickRoll[pos++]
         units.set_param(osc, 'note', note)
         setTimeout(playNext, duration * 1.5)
+        units.set_param(adsr, 'trigger', true)
+        setTimeout(() => units.set_param(adsr, 'trigger', false), duration/2 * 1.5)
       }
       playNext()
     }

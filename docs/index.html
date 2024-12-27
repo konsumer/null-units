@@ -26,18 +26,18 @@
     // click to play
     async function oneTimeClick() {
       document.removeEventListener('click', oneTimeClick)
-      document.body.innerHTML = ''
+      document.body.innerHTML = '<label>Do Demo? <input id="dodemo" type="checkbox" checked /></label>'
 
       const units = new NullManager()
       const audioOut = 0
 
       // load some units
       const osc = await units.load('wavetable')
+      const adsr = await units.load('adsr')
       const gainOsc = await units.load('gain')
       const scopeOsc = await units.load('scope')
       const pitch = await units.load('pitch')
       const lpf = await units.load('mooglpf')
-      const echo = await units.load('bbd')
       const tr808 = await units.load('tr808')
       const distortion = await units.load('distortion')
       const scopeMain = await units.load('scope')
@@ -45,27 +45,30 @@
       // set initial value
       units.set_param(gainOsc, 'gain', 20)
       units.set_param(osc, 'type', 3)
-      units.set_param(lpf, 'cutoff', 88)
+      units.set_param(lpf, 'cutoff', 100)
       units.set_param(lpf, 'resonance', 0.8)
-      units.set_param(echo, 'time', 1000)
-      units.set_param(echo, 'feedback', 85)
-      units.set_param(echo, 'dirt', 25)
+      units.set_param(adsr, 'attack', 0)
+      units.set_param(adsr, 'decay', 3)
+      units.set_param(adsr, 'sustain', 1)
+      units.set_param(adsr, 'release', 1)
+      units.set_param(tr808, 'SD amp decay', 30)
+      units.set_param(tr808, 'CH amp decay', 13)
+      units.set_param(tr808, 'CP amp decay', 45)
+      units.set_param(distortion, 'drive', 100)
+      units.set_param(distortion, 'tone', 0.5)
+      units.set_param(distortion, 'mix', 0.5)
 
       // connect units
-      // use source for analysis (better results)
-      units.connect(osc, scopeOsc)
+      units.connect(adsr, scopeOsc)
       units.connect(osc, pitch)
-
-      units.connect(osc, lpf)
-      units.connect(lpf, echo)
-      units.connect(echo, gainOsc)
+      units.connect(osc, adsr)
+      units.connect(adsr, lpf)
+      units.connect(lpf, gainOsc)
       units.connect(gainOsc, audioOut)
       units.connect(gainOsc, scopeMain)
-
-      units.connect(tr808, scopeMain)
       units.connect(tr808, distortion)
       units.connect(distortion, audioOut)
-
+      units.connect(distortion, scopeMain)
 
       // create UI
       units.setTitle(scopeOsc, 'Source')
@@ -75,34 +78,43 @@
       // update UI when manager gets a chance
       requestAnimationFrame(() => units.update())
 
-      // play random persian-scale song
-      setInterval(() => {
-        units.set_param(osc, 'note', getRandomPersianNote(60, 1))
-      }, 800)
+      const BD = () => units.set_param(tr808, 'note', 36)
+      const SD = () => units.set_param(tr808, 'note', 38)
+      const CH = () => units.set_param(tr808, 'note', 42)
+      const CP = () => units.set_param(tr808, 'note', 56)
+      const CL = () => units.set_param(tr808, 'note', 39)
 
-      // move LPF cutoff to make things trippy
-      let i = 0
+      // demo melody
+      let dodemo = true
+      document.getElementById('dodemo').addEventListener('change', e => {
+        dodemo = e.target.checked
+      })
+      const bpm = 120
+      let beat = 0
+      let part = 0
       setInterval(() => {
-        units.set_param(lpf, 'cutoff', 36 + (i++ % 36))
-      }, 200)
+        if (!dodemo) return
+        const step = beat++ % 16
+        units.set_param(lpf, 'cutoff', 100 + (27 * Math.sin(step/16)))
 
-      // drum beat
-      setInterval(() => {
-        setTimeout(() => units.set_param(tr808, 'note', 38), 1000) // SD
-        units.set_param(tr808, 'note', 35) // BD
-        let counter = 8
-        const i = setInterval(() => {
-          units.set_param(tr808, 'note', 42) // CH
-          if (counter--){
-            clearInterval(i)
-          }
-        }, 100)
-      }, 2000)
-      setTimeout(() => {
-        setInterval(() => {
-          units.set_param(tr808, 'note', 42) // CH
-        }, 1000)
-      }, 500)
+        CH()
+        if ([4, 12].includes(step)) {
+          SD()
+        }
+        if ([0, 6, 10, 13].includes(step)) {
+          BD()
+        }
+        if (step === 15) {
+          part++
+        }
+        if (part % 4 === 3 && step % 4 === 0) {
+          CP()
+        }
+        units.set_param(adsr, 'trigger', beat % 4 === 0)
+        if (step % 4 === 0) {
+          units.set_param(osc, 'note', getRandomPersianNote(36, 1))
+        }
+      }, 60000 / bpm / 2)
     }
 
     // click to play
