@@ -20,7 +20,7 @@ export default function genUI(unit) {
       i.type = 'checkbox'
       i.max = param.max
       i.min = param.min
-      i.checked = param.value
+      i.checked = !!param.value
       i.name = param.name
       i.id = param.name
 
@@ -31,7 +31,7 @@ export default function genUI(unit) {
       }
 
       i.addEventListener('change', e => {
-        e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.value}`
+        e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.checked ?  'true' : 'false' }`
         unit.set_param(param.name, e.target.checked)
       })
 
