@@ -9,7 +9,7 @@ Once a unit is compiled, it can be shared between multiple frames (think of this
 - [web-based editor](http://konsumer.js.org/null-units/)
 - a simpler, more musical demo [on the web](https://konsumer.js.org/null-units/rickroll.htm)
 - a similar example that plays [mario](https://konsumer.js.org/null-units/mario.htm)
-- pi-zero handheld device with OLED screen and MIDI input
+- pi-zero handheld device with small monochrome OLED screen and MIDI input
 - ESP32?
 - embed engine in other things (game engine?) with wasm or native code.
 
