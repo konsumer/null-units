@@ -383,11 +383,12 @@ The main difference from the phaser is that it uses actual delayed copies of the
 
 Negative feedback values can create different tonal characters, and the base delay time can be adjusted to create various flanging effects from subtle doubling to more extreme metallic sounds.
 
-## gain
+### gain
 
 This is a very simple amplifier. You can use it as a template for units with in/out/params.
 
 ### hpf (High-Pass Filter)
+
 A clean high-pass filter for removing low frequencies. Features:
 1. Adjustable cutoff frequency
 2. Smooth frequency response
@@ -401,6 +402,7 @@ Perfect for:
 - Sound design
 - Thinning out sounds
 - Contemporary bass drops
+
 
 ### lpf (Low-Pass Filter)
 
