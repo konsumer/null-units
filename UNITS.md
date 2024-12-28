@@ -101,6 +101,9 @@ const scope = await units.load('scope')
 const pitch = await units.load('pitch')
 ```
 
+You can sue them too, and I will proibably add these to the native host, as well, since they are such useful building-blocks.
+
+
 ## wasm units
 
 Any language that compiles to wasm can be used to make new null-units. In general they should be kept effcient, and I tend to favor speed over accuracy. These will hopefully run on low-end devices, so they should be pretty small, in general.
@@ -112,7 +115,11 @@ const wavetableID = await units.load('wavetable')
 const delayID = await units.load('delay')
 ```
 
-### Auto-Wah
+### adsr
+
+Use this to create a volume-envelope around your audio.  [Here](https://en.wikipedia.org/wiki/ADSR) is more info. Basically, route audio into it, then send a `trigger`, and it will shape the sound.
+
+### autowah
 
 Think Mu-Tron III, very popular in funk.
 
@@ -146,40 +153,7 @@ The effect uses a state variable filter which provides a smooth, musical respons
 
 The resonance parameter adds emphasis around the sweep frequency, and the range parameter controls how wide the frequency sweep is. The up/down parameter lets you choose whether louder signals open or close the filter.
 
-
-### Bitcrusher
-
-For lo-fi digital effects.
-
-This bitcrusher implementation features:
-
-1. Three types of digital degradation:
-   - Bit depth reduction (1-16 bits)
-   - Sample rate reduction (1x to 100x)
-   - Digital noise generation
-
-2. Controls:
-   - Bits: Reduces bit depth
-   - Rate: Reduces sample rate
-   - Noise: Adds digital noise
-   - Mix: Wet/dry mix
-
-3. Features:
-   - Smooth parameter control
-   - Signal-dependent noise
-   - Sample & hold for rate reduction
-   - Independent processing per channel
-
-Usage tips:
-- For subtle lo-fi: High bit depth (12-14 bits), slight rate reduction
-- For 8-bit style: Set bits to 8, moderate rate reduction
-- For extreme effects: Low bits (2-4), heavy rate reduction
-- For digital artifacts: Add noise with low bit depth
-- For "vintage digital": Moderate bits (8-12) with some noise
-
-The effect can create various lo-fi sounds from subtle vintage digital warmth to extreme destruction. The noise parameter adds character that simulates the behavior of low-quality D/A converters.
-
-## BBD (Bucket Brigade Delay)
+### bbd (Bucket Brigade Delay)
 
 A digital recreation of classic analog bucket brigade delay chips, found in vintage delay pedals and chorus effects.
 
@@ -215,7 +189,40 @@ The dirt parameter lets you dial in the amount of analog-style character, from s
 
 Unlike pristine digital delays, this BBD adds character and "movement" to the sound, making it particularly good for adding depth and vintage charm to any source material.
 
-### Chorus
+
+### bitcrusher
+
+For lo-fi digital effects.
+
+This bitcrusher implementation features:
+
+1. Three types of digital degradation:
+   - Bit depth reduction (1-16 bits)
+   - Sample rate reduction (1x to 100x)
+   - Digital noise generation
+
+2. Controls:
+   - Bits: Reduces bit depth
+   - Rate: Reduces sample rate
+   - Noise: Adds digital noise
+   - Mix: Wet/dry mix
+
+3. Features:
+   - Smooth parameter control
+   - Signal-dependent noise
+   - Sample & hold for rate reduction
+   - Independent processing per channel
+
+Usage tips:
+- For subtle lo-fi: High bit depth (12-14 bits), slight rate reduction
+- For 8-bit style: Set bits to 8, moderate rate reduction
+- For extreme effects: Low bits (2-4), heavy rate reduction
+- For digital artifacts: Add noise with low bit depth
+- For "vintage digital": Moderate bits (8-12) with some noise
+
+The effect can create various lo-fi sounds from subtle vintage digital warmth to extreme destruction. The noise parameter adds character that simulates the behavior of low-quality D/A converters.
+
+### chorus
 
 Essential modulation effect for thickening sounds.
 
@@ -251,7 +258,7 @@ This creates the classic chorus effect heard on guitars, synthesizers, and vocal
 The multiple voices and phase-offset LFOs help create a rich, natural-sounding chorus effect that's less "metallic" than a flanger.
 
 
-### Compressor
+### compressor
 
 Very useful for guitar and general dynamics control.
 
@@ -290,7 +297,7 @@ This compressor design aims to be clean and musical while still being CPU-effici
 
 This is basically no-op, with no params. You can use it as a template. I used it for testing.
 
-### Delay
+### delay
 
 A digital delay effect with adjustable time, feedback, and stereo options. Features:
 1. Adjustable delay time up to 2000ms
@@ -308,7 +315,7 @@ Great for:
 
 
 
-### Distortion
+### distortion
 
 Could do both tube-style overdrive and harder distortion.
 
@@ -346,7 +353,7 @@ Usage tips:
 
 The tone control helps shape the final sound, and the mix parameter allows for parallel distortion effects.
 
-### Flanger
+### flanger
 
 Similar to phaser but with shorter delay times.
 
@@ -378,9 +385,9 @@ Negative feedback values can create different tonal characters, and the base del
 
 ## gain
 
-This is a very simple amplifier. Yu can use it as a template for units with params.
+This is a very simple amplifier. You can use it as a template for units with in/out/params.
 
-### HPF (High-Pass Filter)
+### hpf (High-Pass Filter)
 A clean high-pass filter for removing low frequencies. Features:
 1. Adjustable cutoff frequency
 2. Smooth frequency response
@@ -395,7 +402,7 @@ Perfect for:
 - Thinning out sounds
 - Contemporary bass drops
 
-### LPF (Low-Pass Filter)
+### lpf (Low-Pass Filter)
 
 A classic low-pass filter for taming high frequencies.
 
@@ -413,7 +420,7 @@ Ideal for:
 - Lo-fi effects
 - Sound design basics
 
-### MoogLPF
+### mooglpf
 
 A Moog-style resonant low-pass filter emulation.
 
@@ -431,7 +438,7 @@ Perfect for:
 - Warm sound shaping
 - Resonant sweeps
 
-### Phaser
+### phaser
 
 Classic swooshing effect (like MXR Phase 90).
 
@@ -458,7 +465,7 @@ The phaser works by:
 
 This creates the characteristic sweeping sound that's useful for everything from subtle modulation to deep, swooshing effects. The feedback parameter can create more dramatic resonant peaks, similar to how the Phase 90's internal trimpot works.
 
-### Plate
+### plate
 
 A plate reverb simulation inspired by classic studio units.
 
@@ -477,7 +484,7 @@ Great for:
 - Classic studio effects
 
 
-### RingMod
+### ringmod
 
 For metallic/bell-like sounds and special effects.
 
@@ -526,9 +533,9 @@ The depth parameter controls how much of the carrier signal is applied, and the 
 
 No params, just blasts white-noise.
 
-### TR-808 Emulator
+### tr808 (Analog Drum Machine)
 
-Classic analog drum machine emulation inspired by the legendary Roland TR-808. It's got a few more per-chnnbel params, but you can recreate similar sounds.
+Classic analog drum machine emulation inspired by the legendary Roland TR-808. It's got a few more per-channel params, but you can recreate similar sounds.
 
 This TR-808 implementation features:
 
@@ -555,7 +562,7 @@ Usage tips:
 
 The emulation captures the characteristic warmth and punch of the original hardware. The analog modeling includes subtle imperfections and the distinctive character that made the TR-808 a cornerstone of electronic and hip-hop music production.
 
-### Tremolo
+### tremolo
 
 Amplitude modulation effect.
 
@@ -590,7 +597,6 @@ Usage tips:
 The phase offset parameter allows for stereo width effects when using two channels, creating movement in the stereo field. The multiple waveform options allow for different characters of amplitude modulation, from smooth to choppy.
 
 The sync parameter is included but would need to be integrated with your host's tempo system for full functionality.
-
 
 
 ### wavefolder
