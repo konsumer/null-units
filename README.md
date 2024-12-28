@@ -1,5 +1,7 @@
 The idea with this is inspired by [Korg's logue API](https://korginc.github.io/logue-sdk/) and [puredata](https://puredata.info/).
 
+[![intro video](https://img.youtube.com/vi/69S7uBG3oiI/0.jpg)](https://youtu.be/69S7uBG3oiI)
+
 Essentially, "units" are things that produce or process sound, and they can be strung together to create instrumnents. They are made in wasm, and can be written in any programming language that compiles to that.
 
 Once a unit is compiled, it can be shared between multiple frames (think of this as a "device".) Here are some examples:
