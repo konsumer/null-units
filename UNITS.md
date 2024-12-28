@@ -83,24 +83,23 @@ units.set_title(scopeID, 'Your Cool Stuff')
 document.body.appendChild(units.genui(scopeID))
 ```
 
-Some need to this to be useful (`scopeNode`, `pitchNode`) but for others it just provides a fast way to edit params.
+If you leave off the id, it will generate the UI for all the units you have loaded, hich can be very handy for "just show it all".
 
 
 ## built-in
 
-It was helpful to use some built-in units, in the javascript API, while developing.
+It was helpful to use some built-in known-reliabale units, in the javascript API, while developing.
 
 ```js
+// oscilator that uses browser's audio-api (very reliable)
+const osc = await units.load('osc')
+
 // oscope
-const scopeID = units.scopeNode()
+const scope = await units.load('scope')
 
 // pitch-detector (best in middle-midi note-range, not as accurate with low notes)
-const pitchID = units.pitchNode()
-
-// oscilator that uses browser's audio-api (very reliable)
-const oscID = units.oscNode()
+const pitch = await units.load('pitch')
 ```
-
 
 ## wasm units
 
@@ -638,4 +637,4 @@ The bias parameter (when using asymmetric type) can create interesting harmonic 
 
 ### wavetable
 
-This is a very simple wavetable oscillator that uses waveforms loaded from the host. It's not the best way to do it (would probably be better with embedded samples or `oscNode`) but it shows how to request data from the host. Similar could be used for a full sampler, for example.
+This is a very simple wavetable oscillator that uses waveforms loaded from the host. It's not the best way to do it (would probably be better with embedded samples, generated at runtime or `osc`) but it shows how to request data from the host. Similar could be used for a full sampler, for example.
