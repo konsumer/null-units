@@ -527,7 +527,34 @@ The depth parameter controls how much of the carrier signal is applied, and the 
 
 No params, just blasts white-noise.
 
+### TR-808 Emulator
 
+Classic analog drum machine emulation inspired by the legendary Roland TR-808. It's got a few more per-chnnbel params, but you can recreate similar sounds.
+
+This TR-808 implementation features:
+
+1. Authentic drum voices:
+   - Booming bass drum with long decay
+   - Snappy snare with noise component
+   - Dynamic hi-hats (open/closed)
+   - Classic cowbell with metallic character
+   - Distinctive analog toms
+   - Synthetic congas/percussion
+
+2. Controls per voice:
+   - Level: Individual volume control
+   - Decay: Length of sound
+   - Per-channel resonant lowpass filter & distortion
+
+
+Usage tips:
+- For classic hip-hop: Long bass drum decay, snappy snares
+- For house music: Shorter bass drum, prominent open hats
+- For electro: Emphasized cowbell and toms
+- For modern trap: Pitched-down snares, quick bass drum
+- For authentic 808: Subtle accent use, moderate decay times
+
+The emulation captures the characteristic warmth and punch of the original hardware. The analog modeling includes subtle imperfections and the distinctive character that made the TR-808 a cornerstone of electronic and hip-hop music production.
 
 ### Tremolo
 
