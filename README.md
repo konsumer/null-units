@@ -8,8 +8,10 @@ Once a unit is compiled, it can be shared between multiple frames (think of this
 
 - [web-based editor](http://konsumer.js.org/null-units/)
 - a simpler, more musical demo [on the web](https://konsumer.js.org/null-units/rickroll.htm)
+- a similar example that plays [mario](https://konsumer.js.org/null-units/mario.htm)
 - pi-zero handheld device with OLED screen and MIDI input
 - ESP32?
+- embed engine in other things (game engine?) with wasm or native code.
 
 The [NTS-3](https://www.korg.com/us/products/dj/nts_3/) as an example device, has only X/Y/depth params that can be tied to any param (max 8 each unit) of 4 units, and then units can be routed to each other. This will do similar, but allows more params, and units can be shared between any device, and written in any language.
 
