@@ -2,7 +2,7 @@
 
 I am no expert at audio-programming, so I'm sure these could be improved (PRs welcome!)
 
-Each of these effects is designed to provide classic studio-quality processing while remaining CPU-efficient and easy to use.
+Each of these units (blocks that produce or process sound) is designed to provide classic studio-quality processing while remaining CPU-efficient and easy to use.
 
 ## usage
 
