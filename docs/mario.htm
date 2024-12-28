@@ -1,0 +1,195 @@
+<html>
+  <head>
+    <title>null-units</title>
+    <link rel="icon" type="image/x-icon" href="https://avatars.githubusercontent.com/u/10213618" />
+    <link rel="stylesheet" href="demo.css">
+  </head>
+  <body>
+    <p>Click to start</p>
+  </body>
+  <script type="module">
+    import NullManager from './null-manager.js'
+
+    // This will play chorus-melody of "never gonna give you up"
+
+    // click to play
+    async function oneTimeClick() {
+      document.removeEventListener('click', oneTimeClick)
+      document.body.innerHTML = ''
+
+      const units = new NullManager()
+      const audioOut = 0
+
+      // load a test oscillator/scope
+      const osc1 = await units.load('osc')
+      const adsr1 = await units.load('adsr')
+      const osc2 = await units.load('osc')
+      const adsr2 = await units.load('adsr')
+      const tr808 = await units.load('tr808')
+
+      units.connect(osc1, adsr1)
+      units.connect(adsr1, audioOut)
+      units.connect(osc2, adsr2)
+      units.connect(adsr2, audioOut)
+      units.connect(tr808, audioOut)
+
+
+      // set initial value
+      units.set_param(osc1, 'type', 1)
+      units.set_param(osc2, 'type', 1)
+
+      // create UI
+      document.body.appendChild(units.ui())
+
+      // update UI when manager gets a chance
+      requestAnimationFrame(() => units.update())
+
+      // from https://gist.github.com/CodyJung/2315618
+      const parts = [
+        [
+          [ 76, 12 ], [ 76, 12 ],
+          [ 20, 12 ], [ 76, 12 ],
+          [ 20, 12 ], [ 72, 12 ],
+          [ 76, 12 ], [ 20, 12 ],
+          [ 79, 12 ], [ 20, 36 ],
+          [ 67, 12 ], [ 20, 36 ]
+        ],
+        [
+          [ 72, 12 ], [ 20, 24 ], [ 67, 12 ],
+          [ 20, 24 ], [ 64, 12 ], [ 20, 24 ],
+          [ 69, 12 ], [ 20, 12 ], [ 71, 12 ],
+          [ 20, 12 ], [ 70, 12 ], [ 69, 12 ],
+          [ 20, 12 ], [ 67, 16 ], [ 76, 16 ],
+          [ 79, 16 ], [ 81, 12 ], [ 20, 12 ],
+          [ 77, 12 ], [ 79, 12 ], [ 20, 12 ],
+          [ 76, 12 ], [ 20, 12 ], [ 72, 12 ],
+          [ 74, 12 ], [ 71, 12 ], [ 20, 24 ]
+        ],
+        [
+          [ 48, 12 ], [ 20, 12 ], [ 79, 12 ],
+          [ 78, 12 ], [ 77, 12 ], [ 75, 12 ],
+          [ 60, 12 ], [ 76, 12 ], [ 53, 12 ],
+          [ 68, 12 ], [ 69, 12 ], [ 72, 12 ],
+          [ 60, 12 ], [ 69, 12 ], [ 72, 12 ],
+          [ 74, 12 ], [ 48, 12 ], [ 20, 12 ],
+          [ 79, 12 ], [ 78, 12 ], [ 77, 12 ],
+          [ 75, 12 ], [ 55, 12 ], [ 76, 12 ],
+          [ 20, 12 ], [ 84, 12 ], [ 20, 12 ],
+          [ 84, 12 ], [ 84, 12 ]
+        ],
+        [
+          [ 55, 12 ], [ 20, 12 ], [ 48, 12 ],
+          [ 20, 12 ], [ 79, 12 ], [ 78, 12 ],
+          [ 77, 12 ], [ 75, 12 ], [ 60, 12 ],
+          [ 76, 12 ], [ 53, 12 ], [ 68, 12 ],
+          [ 69, 12 ], [ 72, 12 ], [ 60, 12 ],
+          [ 69, 12 ], [ 72, 12 ], [ 74, 12 ],
+          [ 48, 12 ], [ 20, 12 ], [ 75, 24 ],
+          [ 20, 12 ], [ 74, 24 ], [ 20, 12 ],
+          [ 72, 24 ], [ 20, 12 ], [ 55, 12 ],
+          [ 55, 12 ], [ 20, 12 ], [ 48, 12 ]
+        ],
+        [
+          [ 72, 12 ], [ 72, 12 ], [ 20, 12 ], [ 72, 12 ],
+          [ 20, 12 ], [ 72, 12 ], [ 74, 12 ], [ 20, 12 ],
+          [ 76, 12 ], [ 72, 12 ], [ 20, 12 ], [ 69, 12 ],
+          [ 67, 12 ], [ 20, 12 ], [ 43, 12 ], [ 20, 12 ],
+          [ 72, 12 ], [ 72, 12 ], [ 20, 12 ], [ 72, 12 ],
+          [ 20, 12 ], [ 72, 12 ], [ 74, 12 ], [ 76, 12 ],
+          [ 55, 12 ], [ 20, 24 ], [ 48, 12 ], [ 20, 24 ],
+          [ 43, 12 ], [ 20, 12 ], [ 72, 12 ], [ 72, 12 ],
+          [ 20, 12 ], [ 72, 12 ], [ 20, 12 ], [ 72, 12 ],
+          [ 74, 12 ], [ 20, 12 ], [ 76, 12 ], [ 72, 12 ],
+          [ 20, 12 ], [ 69, 12 ], [ 67, 12 ], [ 20, 12 ],
+          [ 43, 12 ], [ 20, 12 ], [ 76, 12 ], [ 76, 12 ],
+          [ 20, 12 ], [ 76, 12 ], [ 20, 12 ], [ 72, 12 ],
+          [ 76, 12 ], [ 20, 12 ], [ 79, 12 ], [ 20, 36 ],
+          [ 67, 12 ], [ 20, 36 ]
+        ],
+        [
+          [ 76, 12 ], [ 72, 12 ], [ 20, 12 ], [ 67, 12 ],
+          [ 55, 12 ], [ 20, 12 ], [ 68, 12 ], [ 20, 12 ],
+          [ 69, 12 ], [ 77, 12 ], [ 53, 12 ], [ 77, 12 ],
+          [ 69, 12 ], [ 60, 12 ], [ 53, 12 ], [ 20, 12 ],
+          [ 71, 16 ], [ 81, 16 ], [ 81, 16 ], [ 81, 16 ],
+          [ 79, 16 ], [ 77, 16 ], [ 76, 12 ], [ 72, 12 ],
+          [ 55, 12 ], [ 69, 12 ], [ 67, 12 ], [ 60, 12 ],
+          [ 55, 12 ], [ 20, 12 ], [ 76, 12 ], [ 72, 12 ],
+          [ 20, 12 ], [ 67, 12 ], [ 55, 12 ], [ 20, 12 ],
+          [ 68, 12 ], [ 20, 12 ], [ 69, 12 ], [ 77, 12 ],
+          [ 53, 12 ], [ 77, 12 ], [ 69, 12 ], [ 60, 12 ],
+          [ 53, 12 ], [ 20, 12 ], [ 71, 12 ], [ 77, 12 ],
+          [ 20, 12 ], [ 77, 12 ], [ 77, 16 ], [ 76, 16 ],
+          [ 74, 16 ], [ 72, 12 ], [ 64, 12 ], [ 55, 12 ],
+          [ 64, 12 ], [ 60, 12 ], [ 20, 36 ]
+        ],
+        [
+          [ 72, 12 ], [ 20, 24 ],
+          [ 67, 12 ], [ 20, 24 ],
+          [ 64, 24 ], [ 69, 16 ],
+          [ 71, 16 ], [ 69, 16 ],
+          [ 68, 24 ], [ 70, 24 ],
+          [ 68, 24 ], [ 67, 12 ],
+          [ 65, 12 ], [ 67, 48 ]
+        ]
+      ]
+      const patterns = [0, 1, 1, 2, 2, 4, 1, 1, 5, 5, 4, 5, 6]
+
+      const BD = () => units.set_param(tr808, 'note', 36)
+      const SD = () => units.set_param(tr808, 'note', 38)
+      const CH = () => units.set_param(tr808, 'note', 42)
+      const CP = () => units.set_param(tr808, 'note', 56)
+      const CL = () => units.set_param(tr808, 'note', 39)
+
+
+      let pos = 0
+      let pat = 0
+      let notes = parts[0]
+      function playNext() {
+        if (pos >= notes.length) {
+          pos = 0
+          pat = (pat + 1) % patterns.length
+          notes = parts[patterns[pat]]
+        }
+        const [note, duration] = notes[pos++]
+        if (note === 20) {
+           units.set_param(adsr1, 'trigger', false)
+        } else {
+          units.set_param(adsr1, 'trigger', true)
+          units.set_param(osc1, 'note', note)
+        }
+        setTimeout(playNext, (duration/12) * 150)
+        if ([3, 4].includes(pat)) {
+           units.set_param(adsr2, 'trigger', true)
+          play4()
+        } else {
+           units.set_param(adsr2, 'trigger', false)
+        }
+      }
+      playNext()
+      function play4() {
+        const [note, duration] = parts[3][beat % parts[3].length]
+        if (note === 20) {
+           units.set_param(adsr2, 'trigger', false)
+        } else {
+          units.set_param(adsr2, 'trigger', true)
+          units.set_param(osc2, 'note', note)
+        }
+      }
+
+      let beat = 0
+      setInterval(() => {
+        beat++
+        if (beat % 4 === 0) {
+          BD()
+        }
+        if (beat % 4 === 2) {
+          CH()
+        }
+      }, 150)
+    }
+
+    // click to play
+    document.addEventListener('click', oneTimeClick)
+  </script>
+</html>
