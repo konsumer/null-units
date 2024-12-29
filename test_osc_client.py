@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# this is a simple example OSC client to test that the protocol is working correctly
+
 from pythonosc import udp_client
 from pythonosc.osc_server import BlockingOSCUDPServer
 from pythonosc.dispatcher import Dispatcher
@@ -17,33 +19,40 @@ class DebugOSCServer(BlockingOSCUDPServer):
     def handle_request(self):
         try:
             data, client_address = self.socket.recvfrom(65535)
-            print("Raw received data:", ' '.join(f'{b:02x}' for b in data))
+            print(f"\nReceived raw data from {client_address}:")
+            print("Data:", ' '.join(f'{b:02x}' for b in data))
             super().handle_request()
         except Exception as e:
             print(f"Error handling message: {e}")
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-o', '--out_port', type=int, default=53100, help='Port to send to (default: 53100)')
-    parser.add_argument('-i', '--in_port', type=int, default=53101, help='Port to receive on (default: 53101)')
+    parser = argparse.ArgumentParser(description='OSC Client')
+    parser.add_argument('-o', '--outport', type=int, default=53100, help='UDP port to connect to server (default: 53100)')
+    parser.add_argument('-i', '--inport', type=int, default=53101, help='UDP port to receive responses on (default: 53101)')
     args = parser.parse_args()
 
     # Setup dispatcher
     dispatcher = Dispatcher()
     dispatcher.map("/response/int", handle_response)
+    print(f"Registered handler for '/response/int' messages")
 
     # Setup server to receive responses
-    server = DebugOSCServer(("127.0.0.1", args.in_port), dispatcher)
+    server = DebugOSCServer(("127.0.0.1", args.inport), dispatcher)
+    print(f"Created UDP server listening on port {args.inport}")
+
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
+    print(f"Server thread started")
 
     # Setup client
-    client = udp_client.SimpleUDPClient("127.0.0.1", args.out_port)
+    client = udp_client.SimpleUDPClient("127.0.0.1", args.outport)
+    print(f"Created UDP client sending to port {args.outport}")
 
-    print(f"Sending on port {args.out_port}")
-    print(f"Receiving on port {args.in_port}")
-    print("Press Ctrl+C to exit\n")
+    print("\nConfiguration:")
+    print(f"→ Sending to server on port {args.outport}")
+    print(f"← Receiving responses on port {args.inport}")
+    print("\nPress Ctrl+C to exit\n")
 
     try:
         counter = 0

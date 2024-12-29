@@ -31,8 +31,8 @@ class DebugOSCServer(BlockingOSCUDPServer):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--in_port', type=int, default=53100, help='Port to receive on (default: 53100)')
-    parser.add_argument('-o', '--out_port', type=int, default=53101, help='Port to send to (default: 53101)')
+    parser.add_argument('-i', '--inport', type=int, default=53100, help='UDP port to receive messages on (default: 53100)')
+    parser.add_argument('-o', '--outport', type=int, default=53101, help='UDP port to send responses on (default: 53101)')
     args = parser.parse_args()
 
     # Setup dispatcher
