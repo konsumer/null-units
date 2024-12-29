@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <lo/lo.h>
+#include <getopt.h>
 
 // Global variables
 lo_server server = NULL;
@@ -31,27 +32,47 @@ int handle_int(const char *path, const char *types, lo_arg **argv,
     return 0;
 }
 
-// Error handler
 void error_handler(int num, const char *msg, const char *path) {
     printf("liblo server error %d in path %s: %s\n", num, path, msg);
 }
 
+void print_usage() {
+    printf("Usage: test_osc_server [options]\n");
+    printf("Options:\n");
+    printf("  -o, --outport PORT  UDP port to send responses on (default: 53101)\n");
+    printf("  -i, --inport PORT   UDP port to receive messages on (default: 53100)\n");
+}
+
 int main(int argc, char *argv[]) {
-    int in_port = 53100;  // default input port
-    int out_port = 53101; // default output port
+    int in_port = 53100;   // Default port to receive messages on
+    int out_port = 0;  // Default port to send responses on
     char port_str[16];
 
-    // Parse command line arguments
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--in_port") == 0) {
-            if (i + 1 < argc) {
-                in_port = atoi(argv[++i]);
-            }
-        } else if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--out_port") == 0) {
-            if (i + 1 < argc) {
-                out_port = atoi(argv[++i]);
-            }
+    // Long options
+    static struct option long_options[] = {
+        {"outport", required_argument, 0, 'o'},
+        {"inport", required_argument, 0, 'i'},
+        {0, 0, 0, 0}
+    };
+
+    // Parse command line options
+    int opt;
+    while ((opt = getopt_long(argc, argv, "o:i:", long_options, NULL)) != -1) {
+        switch (opt) {
+            case 'o':
+                out_port = atoi(optarg);
+                break;
+            case 'i':
+                in_port = atoi(optarg);
+                break;
+            default:
+                print_usage();
+                return 1;
         }
+    }
+
+    if (out_port ==0){
+      out_port = in_port + 1;
     }
 
     // Setup signal handler
