@@ -1,5 +1,4 @@
-#ifndef NULL_MANAGER_H
-#define NULL_MANAGER_H
+#pragma once
 
 #include <soundio/soundio.h>
 #include "wasm_export.h"
@@ -57,7 +56,7 @@ typedef struct {
     NullUnit units[MAX_UNITS];
     unsigned int unit_count;
     float* samples[MAX_SAMPLES];
-     unsigned int sample_count;
+    unsigned int sample_count;
 } NullManager;
 
 // Initialize the audio system and manager
@@ -66,12 +65,23 @@ NullManager* null_manager_create(void);
 // Clean up
 void null_manager_destroy(NullManager* manager);
 
-unsigned int load(NullManager* manager, const char* name);
-void unload(NullManager* manager, unsigned int unitId);
-void connect(NullManager* manager, unsigned int unitSourceId, unsigned int unitSourcePort, unsigned int unitDestinationId, unsigned int unitDestinationPort);
-void disconnect(NullManager* manager, unsigned int unitSourceId, unsigned int unitSourcePort, unsigned int unitDestinationId, unsigned int unitDestinationPort);
-void set_param(NullManager* manager, unsigned int unitSourceId, unsigned int paramId, NullUnitParamValue value, unsigned int timefromNowInSeconds);
-NullUnitParamValue* get_param(NullManager* manager, unsigned int unitSourceId, unsigned int paramId);
-NullUnitnInfo* get_info(NullManager* manager, unsigned int unitSourceId);
+// load a unit
+unsigned int null_manager_load(NullManager* manager, const char* name);
 
-#endif
+// unload a unit
+void null_manager_unload(NullManager* manager, unsigned int unitId);
+
+// connect a unit to another
+void null_manager_connect(NullManager* manager, unsigned int unitSourceId, unsigned int unitSourcePort, unsigned int unitDestinationId, unsigned int unitDestinationPort);
+
+// disconnect
+void null_manager_disconnect(NullManager* manager, unsigned int unitSourceId, unsigned int unitSourcePort, unsigned int unitDestinationId, unsigned int unitDestinationPort);
+
+// set a param of a unit
+void null_manager_set_param(NullManager* manager, unsigned int unitSourceId, unsigned int paramId, NullUnitParamValue value, unsigned int timefromNowInSeconds);
+
+// get a param of a unit
+NullUnitParamValue* null_manager_get_param(NullManager* manager, unsigned int unitSourceId, unsigned int paramId);
+
+// get info about a loaded unit
+NullUnitnInfo* null_manager_get_info(NullManager* manager, unsigned int unitSourceId);

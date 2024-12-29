@@ -1,57 +1,95 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <signal.h>
-#include "null_manager.h"
+#include <unistd.h>
+#include <lo/lo.h>
 
-static volatile bool keep_running = true;
+// Global variables
+lo_server server = NULL;
+lo_address client_address = NULL;
+int keep_running = 1;
 
-static void interrupt_handler(int _) {
-    (void)_;
-    keep_running = false;
+// Signal handler for Ctrl+C
+void signal_handler(int signum) {
+    printf("\nExiting...\n");
+    keep_running = 0;
 }
 
-int main() {
-    // Setup signal handling for clean exit
-    signal(SIGINT, interrupt_handler);
+// Handler for /test/int messages
+int handle_int(const char *path, const char *types, lo_arg **argv,
+              int argc, lo_message msg, void *user_data) {
+    if (argc < 1) return 0;
 
-    // Create our audio manager
-    NullManager* manager = null_manager_create();
-    if (!manager) {
-        fprintf(stderr, "Failed to create audio manager\n");
+    int value = argv[0]->i;
+    printf("\nReceived %s: %d (0x%08x)\n", path, value, value);
+
+    // Send response back
+    lo_send(client_address, "/response/int", "i", value);
+    printf("Sent response: %d (0x%08x)\n", value, value);
+
+    return 0;
+}
+
+// Error handler
+void error_handler(int num, const char *msg, const char *path) {
+    printf("liblo server error %d in path %s: %s\n", num, path, msg);
+}
+
+int main(int argc, char *argv[]) {
+    int in_port = 53100;  // default input port
+    int out_port = 53101; // default output port
+    char port_str[16];
+
+    // Parse command line arguments
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--in_port") == 0) {
+            if (i + 1 < argc) {
+                in_port = atoi(argv[++i]);
+            }
+        } else if (strcmp(argv[i], "-o") == 0 || strcmp(argv[i], "--out_port") == 0) {
+            if (i + 1 < argc) {
+                out_port = atoi(argv[++i]);
+            }
+        }
+    }
+
+    // Setup signal handler
+    signal(SIGINT, signal_handler);
+
+    // Convert input port to string
+    snprintf(port_str, sizeof(port_str), "%d", in_port);
+
+    // Create OSC server
+    server = lo_server_new(port_str, error_handler);
+    if (!server) {
+        printf("Could not create server\n");
         return 1;
     }
 
-    // Load an oscillator unit
-    unsigned int osc_id = load(manager, "osc");
-    if (osc_id == 0) {
-        fprintf(stderr, "Failed to load oscillator unit\n");
-        null_manager_destroy(manager);
+    // Setup client address for responses
+    client_address = lo_address_new("127.0.0.1", (const char *)&out_port);
+    if (!client_address) {
+        printf("Could not create client address\n");
+        lo_server_free(server);
         return 1;
     }
 
-    // Connect oscillator to output (unit 0)
-    connect(manager, osc_id, 0, 0, 0);
+    // Add method handler
+    lo_server_add_method(server, "/test/int", "i", handle_int, NULL);
 
-    // Set oscillator parameters
-    NullUnitParamValue value;
+    printf("OSC Server listening on port %d\n", in_port);
+    printf("Sending responses to port %d\n", out_port);
+    printf("Press Ctrl+C to exit\n\n");
 
-    // Set waveform type to sine (0)
-    value.u = 0;
-    set_param(manager, osc_id, 0, value, 0);
-
-    // Set note to A4 (69 in MIDI)
-    value.f = 69.0f;
-    set_param(manager, osc_id, 1, value, 0);
-
-    printf("Playing 440Hz sine wave. Press Ctrl+C to exit...\n");
-
-    // Keep the program running until Ctrl+C
+    // Main loop
     while (keep_running) {
-        soundio_flush_events(manager->soundio);
-        soundio_wait_events(manager->soundio);
+        lo_server_recv_noblock(server, 100);
     }
 
     // Cleanup
-    null_manager_destroy(manager);
+    lo_address_free(client_address);
+    lo_server_free(server);
+
     return 0;
 }

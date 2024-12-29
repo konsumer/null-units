@@ -10,5 +10,6 @@ FetchContent_Declare(wamr
   URL https://github.com/bytecodealliance/wasm-micro-runtime/archive/refs/heads/master.zip
 )
 FetchContent_MakeAvailable(wamr)
+
 include (${wamr_SOURCE_DIR}/build-scripts/runtime_lib.cmake)
 add_library(wamr ${WAMR_RUNTIME_LIB_SOURCE})
