@@ -2,12 +2,24 @@
 
 // Initialize the audio system and manager
 NullUnitManager* null_manager_create() {
+  // TODO: setup soundIO
+
   NullUnitManager* manager =  malloc(sizeof(NullUnitManager));
   manager->units = NULL;
   manager->samples = NULL;
+  manager->available_units = NULL;
 
   // index 0 is audioOut
   NullUnit* audioOut = malloc(sizeof(NullUnit));
+  audioOut->active = true;
+  audioOut->info = malloc(sizeof(NullUnitnInfo));
+  audioOut->info->name = strdup("out");
+  audioOut->info->channelsIn = 1;
+  audioOut->info->channelsOut = 0;
+  audioOut->info->params = NULL;
+
+  // TODO: setup input_buffer/output_buffer
+
   cvector_push_back(manager->units, audioOut);
 
   return manager;

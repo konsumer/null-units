@@ -37,8 +37,7 @@ typedef struct {
   char* name;
   uint8_t channelsIn;
   uint8_t channelsOut;
-  uint8_t paramCount;
-  NullUnitParamInfo* params;
+  cvector_vector_type(NullUnitParamInfo*) params;
 } NullUnitnInfo;
 
 typedef struct {
@@ -51,11 +50,17 @@ typedef struct {
 } NullUnit;
 
 typedef struct {
+  char* name;
+  char* path;
+} NullUnitAvailable;
+
+typedef struct {
     struct SoundIo* soundio;
     struct SoundIoDevice* device;
     struct SoundIoOutStream* outstream;
     cvector_vector_type(NullUnit*) units;
     cvector_vector_type(float*) samples;
+    cvector_vector_type(NullUnitAvailable) available_units;
 } NullUnitManager;
 
 // Initialize the audio system and manager
