@@ -33,8 +33,7 @@ def main():
 
     # Setup dispatcher
     dispatcher = Dispatcher()
-    dispatcher.map("/response/int", handle_response)
-    print(f"Registered handler for '/response/int' messages")
+    dispatcher.map("/*", handle_response)
 
     # Setup server to receive responses
     server = DebugOSCServer(("127.0.0.1", args.inport), dispatcher)
@@ -55,12 +54,12 @@ def main():
     print("\nPress Ctrl+C to exit\n")
 
     try:
-        counter = 0
+        client.send_message("/unit/load", "osc")
+        client.send_message("/unit/connect", [1, 0, 0, 0])
+        client.send_message("/unit/param", [1, 0, 1, 0]) # type=sqr
+        client.send_message("/unit/param", [1, 1, 60, 0]) # note=mid-C
+
         while True:
-            value = counter % 256  # Keep values small for testing
-            print(f"\nSending test value: {value} (0x{value:08x})")
-            client.send_message("/test/int", value)
-            counter += 1
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nExiting...")
