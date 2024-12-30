@@ -70,17 +70,35 @@ int handle_unit_connect(const char *path, const char *types, lo_arg **argv, int 
   return 0;
 }
 
-// Handler for /unit/param messages
-int handle_unit_param(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void* managerPtr) {
+// Handler for /unit/param messages (int value)
+int handle_unit_param_i(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void* managerPtr) {
   if (argc != 4) {
     return 0;
   }
 
   unsigned int unitSourceId = argv[0]->i;
   unsigned int paramId = argv[1]->i;
-  NullUnitParamValue value = { .u=argv[2]->i };
+  NullUnitParamValue value = { .i=argv[2]->i };
   unsigned int timefromNowInSeconds = argv[3]->i;
-  printf("unit param: %u %u %u %u\n", unitSourceId, paramId, value.u, timefromNowInSeconds);
+  printf("unit param: %u %u %d %u\n", unitSourceId, paramId, value.i, timefromNowInSeconds);
+
+  NullUnitManager* manager = (NullUnitManager*)managerPtr;
+  null_manager_set_param(manager, unitSourceId, paramId, value, timefromNowInSeconds);
+
+  return 0;
+}
+
+// Handler for /unit/param messages (float value)
+int handle_unit_param_f(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void* managerPtr) {
+  if (argc != 4) {
+    return 0;
+  }
+
+  unsigned int unitSourceId = argv[0]->i;
+  unsigned int paramId = argv[1]->i;
+  NullUnitParamValue value = { .f=argv[2]->f };
+  unsigned int timefromNowInSeconds = argv[3]->i;
+  printf("unit param: %u %u %f %u\n", unitSourceId, paramId, value.f, timefromNowInSeconds);
 
   NullUnitManager* manager = (NullUnitManager*)managerPtr;
   null_manager_set_param(manager, unitSourceId, paramId, value, timefromNowInSeconds);
@@ -141,8 +159,11 @@ int main(int argc, char *argv[]) {
   NullUnitManager* manager = null_manager_create();
   lo_server_add_method(server, "/unit/load", "s", handle_unit_load, manager);
   lo_server_add_method(server, "/unit/connect", "iiii", handle_unit_connect, manager);
-  lo_server_add_method(server, "/unit/param", "iiii", handle_unit_param, manager);
   lo_server_add_method(server, "/unit/unload", "i", handle_unit_unload, manager);
+
+  // depends on type
+  lo_server_add_method(server, "/unit/param", "iiii", handle_unit_param_i, manager);
+  lo_server_add_method(server, "/unit/param", "iifi", handle_unit_param_f, manager);
 
 
   printf("nullunit OSC Server listening on port %d\n", in_port);
