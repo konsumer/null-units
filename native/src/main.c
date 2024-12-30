@@ -136,6 +136,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // TODO: allow loading a bundle file (multiple messages with timestamps)
+
   if (out_port == 0) {
     out_port = in_port + 1;
   }

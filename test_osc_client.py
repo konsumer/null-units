@@ -54,6 +54,7 @@ def main():
     print("\nPress Ctrl+C to exit\n")
 
     try:
+        # TODO: check on bundling (timestamps, multiple messages)
         client.send_message("/unit/load", "osc")
         client.send_message("/unit/connect", [1, 0, 0, 0])
         client.send_message("/unit/param", [1, 0, 1, 0.0]) # unit=1, param=0, value=1, time=0.0
