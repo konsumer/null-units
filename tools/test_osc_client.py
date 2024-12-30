@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# this is a simple example OSC client to test that the protocol is working correctly
+# this is a simple example OSC client to test that the protocol is working correctly and make sure server is working
 
 from pythonosc import udp_client
 from pythonosc.osc_server import BlockingOSCUDPServer
@@ -58,7 +58,7 @@ def main():
         client.send_message("/unit/load", "osc")
         client.send_message("/unit/connect", [1, 0, 0, 0])
         client.send_message("/unit/param", [1, 0, 1, 0.0]) # unit=1, param=0, value=1, time=0.0
-        client.send_message("/unit/param", [1, 1, 60, 0.0]) # unit=1, param=1, value=60, time=0.0
+        client.send_message("/unit/param", [1, 1, 60]) # unit=1, param=1, value=60, time=0.0
 
         while True:
             time.sleep(1)

@@ -84,6 +84,24 @@ int handle_unit_param_i(const char *path, const char *types, lo_arg **argv, int 
   return 0;
 }
 
+int handle_unit_param_i_notime(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void* managerPtr) {
+  if (argc != 3) {
+    return 0;
+  }
+
+  unsigned int unitSourceId = argv[0]->i;
+  unsigned int paramId = argv[1]->i;
+  NullUnitParamValue value = { .i=argv[2]->i };
+  float timefromNowInSeconds = 0.0f;
+  printf("unit param: %u %u %d %f\n", unitSourceId, paramId, value.i, timefromNowInSeconds);
+
+  NullUnitManager* manager = (NullUnitManager*)managerPtr;
+  null_manager_set_param(manager, unitSourceId, paramId, value, timefromNowInSeconds);
+
+  return 0;
+}
+
+
 // Handler for /unit/param messages (float value)
 int handle_unit_param_f(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void* managerPtr) {
   if (argc != 4) {
@@ -94,6 +112,23 @@ int handle_unit_param_f(const char *path, const char *types, lo_arg **argv, int 
   unsigned int paramId = argv[1]->i;
   NullUnitParamValue value = { .f=argv[2]->f };
   float timefromNowInSeconds = argv[3]->f;
+  printf("unit param: %u %u %f %f\n", unitSourceId, paramId, value.f, timefromNowInSeconds);
+
+  NullUnitManager* manager = (NullUnitManager*)managerPtr;
+  null_manager_set_param(manager, unitSourceId, paramId, value, timefromNowInSeconds);
+
+  return 0;
+}
+
+int handle_unit_param_f_notime(const char *path, const char *types, lo_arg **argv, int argc, lo_message msg, void* managerPtr) {
+  if (argc != 3) {
+    return 0;
+  }
+
+  unsigned int unitSourceId = argv[0]->i;
+  unsigned int paramId = argv[1]->i;
+  NullUnitParamValue value = { .f=argv[2]->f };
+  float timefromNowInSeconds = 0.0f;
   printf("unit param: %u %u %f %f\n", unitSourceId, paramId, value.f, timefromNowInSeconds);
 
   NullUnitManager* manager = (NullUnitManager*)managerPtr;
@@ -183,6 +218,8 @@ int main(int argc, char *argv[]) {
   // depends on incoming type
   lo_server_add_method(server, "/unit/param", "iiif", handle_unit_param_i, manager);
   lo_server_add_method(server, "/unit/param", "iiff", handle_unit_param_f, manager);
+  lo_server_add_method(server, "/unit/param", "iii", handle_unit_param_i_notime, manager);
+  lo_server_add_method(server, "/unit/param", "iif", handle_unit_param_f_notime, manager);
 
   int i = 0;
   int c = cvector_size(unitPaths);
