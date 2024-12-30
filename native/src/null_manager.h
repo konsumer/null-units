@@ -1,30 +1,37 @@
 #pragma once
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <glob.h>
+#include <string.h>
+#include <stdlib.h>
+#include <libgen.h>
+
 #define CVECTOR_LOGARITHMIC_GROWTH
 #include "cvector.h"
 
 #include <soundio/soundio.h>
 #include "wasm_export.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#define MAX_UNITS 256
-#define MAX_SAMPLES 256
 #define SAMPLE_RATE 48000
 #define FRAMES_PER_BUFFER 256
 
+// these are the valid types for params
 typedef enum {
-  NULL_PARAM_BOOL,  // stored as int32_t
+  NULL_PARAM_BOOL,  // stored as i32
   NULL_PARAM_I32,
   NULL_PARAM_F32
 } NullUnitParamType;
 
+// this union is so you can pass around int/float data (for params)
 typedef union {
   int32_t i;
   float f;
 } NullUnitParamValue;
 
+// this is a single param's info
 typedef struct {
   NullUnitParamType type;
   NullUnitParamValue min;
@@ -33,6 +40,7 @@ typedef struct {
   char* name;
 } NullUnitParamInfo;
 
+// this is info (name, params, chnnels, etc) about a unit
 typedef struct {
   char* name;
   uint8_t channelsIn;
@@ -40,6 +48,7 @@ typedef struct {
   cvector_vector_type(NullUnitParamInfo*) params;
 } NullUnitnInfo;
 
+// this is a single loaded unit
 typedef struct {
     wasm_module_t* module;
     wasm_module_inst_t* module_inst;
@@ -49,17 +58,25 @@ typedef struct {
     bool active;
 } NullUnit;
 
+// this is info about an available unit
 typedef struct {
   char* name;
   char* path;
 } NullUnitAvailable;
 
+// this is a loaded sample
+typedef struct {
+  float* data;
+  int len;
+} NullUnitSample;
+
+// this represents a complete manager instance
 typedef struct {
     struct SoundIo* soundio;
     struct SoundIoDevice* device;
     struct SoundIoOutStream* outstream;
+    cvector_vector_type(NullUnitSample) samples;
     cvector_vector_type(NullUnit*) units; // these are loaded
-    cvector_vector_type(float*) samples;
     cvector_vector_type(NullUnitAvailable) available_units; // these are found via paths or whatever
 } NullUnitManager;
 
@@ -89,3 +106,12 @@ NullUnitParamValue* null_manager_get_param(NullUnitManager* manager, unsigned in
 
 // get info about a loaded unit
 NullUnitnInfo* null_manager_get_info(NullUnitManager* manager, unsigned int unitSourceId);
+
+
+// SHARED UTILS
+
+// get list of wasm files in a dir
+void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable) *files);
+
+// just read a file as bytes
+unsigned char* read_file(char* filename, int* bytesRead);

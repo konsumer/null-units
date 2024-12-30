@@ -11,7 +11,7 @@ This implements a headless native host for null-units. It's not at all ready, I 
 
 ```bash
 # use docs/units to find units, preload samples like on web example, load bundle to connect everything
-./native/build/nullunits -u docs/units -d samples/sin.wav -d samples/sqr.wav -d samples/tri.wav -d samples/saw.wav -b example.bundle
+./native/build/nullunits -u docs/units -d samples/sin.raw -d samples/sqr.raw -d samples/tri.raw -d samples/saw.raw -b example.bundle
 ```
 
 ### todo

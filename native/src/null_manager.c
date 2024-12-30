@@ -71,3 +71,84 @@ NullUnitParamValue* null_manager_get_param(NullUnitManager* manager, unsigned in
 NullUnitnInfo* null_manager_get_info(NullUnitManager* manager, unsigned int unitSourceId) {
   return NULL;
 }
+
+// get list of wasm files in a dir
+void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable) *files) {
+    glob_t glob_result;
+    char pattern[1024];
+
+    // Create the glob pattern by combining dirname with "/*.wasm"
+    snprintf(pattern, sizeof(pattern), "%s/*.wasm", dirname);
+
+    // Perform the glob operation
+    int ret = glob(pattern, GLOB_TILDE, NULL, &glob_result);
+    if (ret != 0) {
+        // Handle error if needed
+        return;
+    }
+
+    // Iterate through all found files
+    for (size_t i = 0; i < glob_result.gl_pathc; i++) {
+        char* full_path = strdup(glob_result.gl_pathv[i]);
+        char* name = strdup(basename(glob_result.gl_pathv[i]));
+
+        // Remove .wasm extension from name
+        char* dot = strrchr(name, '.');
+        if (dot != NULL) {
+            *dot = '\0';
+        }
+
+        // Create new NullUnitAvailable structure
+        NullUnitAvailable unit = {
+            .name = name,
+            .path = full_path
+        };
+
+        // Add to the vector
+        cvector_push_back(*files, unit);
+    }
+
+    // Free the glob structure
+    globfree(&glob_result);
+}
+
+// just read a file as bytes
+unsigned char* read_file(char* filename, int* bytesRead) {
+    FILE* file;
+    unsigned char* buffer;
+    long file_size;
+
+    // Open the file in binary read mode
+    file = fopen(filename, "rb");
+    if (file == NULL) {
+        *bytesRead = 0;
+        return NULL;
+    }
+
+    // Get file size
+    fseek(file, 0, SEEK_END);
+    file_size = ftell(file);
+    rewind(file);
+
+    // Allocate memory for the buffer
+    buffer = (unsigned char*)malloc(file_size);
+    if (buffer == NULL) {
+        fclose(file);
+        *bytesRead = 0;
+        return NULL;
+    }
+
+    // Read the file into the buffer
+    *bytesRead = fread(buffer, 1, file_size, file);
+
+    // Close the file
+    fclose(file);
+
+    // Check if we read the expected number of bytes
+    if (*bytesRead != file_size) {
+        free(buffer);
+        return NULL;
+    }
+
+    return buffer;
+}

@@ -1,59 +1,11 @@
 #include <getopt.h>
 #include <lo/lo.h>
 #include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <glob.h>
-#include <string.h>
-#include <stdlib.h>
-#include <libgen.h>
 #include "null_manager.h"
 
 static lo_server server = NULL;
 static lo_address client_address = NULL;
 static int keep_running = 1;
-
-// get list of wasm files in a dir
-void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable) *files) {
-    glob_t glob_result;
-    char pattern[1024];
-
-    // Create the glob pattern by combining dirname with "/*.wasm"
-    snprintf(pattern, sizeof(pattern), "%s/*.wasm", dirname);
-
-    // Perform the glob operation
-    int ret = glob(pattern, GLOB_TILDE, NULL, &glob_result);
-    if (ret != 0) {
-        // Handle error if needed
-        return;
-    }
-
-    // Iterate through all found files
-    for (size_t i = 0; i < glob_result.gl_pathc; i++) {
-        char* full_path = strdup(glob_result.gl_pathv[i]);
-        char* name = strdup(basename(glob_result.gl_pathv[i]));
-
-        // Remove .wasm extension from name
-        char* dot = strrchr(name, '.');
-        if (dot != NULL) {
-            *dot = '\0';
-        }
-
-        // Create new NullUnitAvailable structure
-        NullUnitAvailable unit = {
-            .name = name,
-            .path = full_path
-        };
-
-        // Add to the vector
-        cvector_push_back(*files, unit);
-    }
-
-    // Free the glob structure
-    globfree(&glob_result);
-}
 
 // Signal handler for Ctrl+C
 void signal_handler(int signum) {
@@ -228,12 +180,10 @@ int main(int argc, char *argv[]) {
   lo_server_add_method(server, "/unit/unload", "i", handle_unit_unload, manager);
 
 
-  // depends on type
+  // depends on incoming type
   lo_server_add_method(server, "/unit/param", "iiif", handle_unit_param_i, manager);
   lo_server_add_method(server, "/unit/param", "iiff", handle_unit_param_f, manager);
 
-  // TODO: for each bundle, send messages
-  // TODO: for each dataFile, load data
   int i = 0;
   int c = cvector_size(unitPaths);
   if (c > 0) {
@@ -251,6 +201,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  // TODO: for each bundle, run messages
   c = cvector_size(bundles);
   if (c > 0) {
     printf("bundles:\n");
@@ -258,11 +209,24 @@ int main(int argc, char *argv[]) {
       printf("  %s\n", bundles[i]);
     }
   }
+
+  // TODO: currently only supports raw samples, but I could load audio files...
   c = cvector_size(dataFiles);
   if (c > 0) {
     printf("data:\n");
+    int bytesLen;
     for (i=0; i<c; i++) {
-      printf("  %s\n", dataFiles[i]);
+      unsigned char* data = read_file(dataFiles[i], &bytesLen);
+      if (data != NULL && bytesLen > 0) {
+        printf("  %s\n", dataFiles[i]);
+        NullUnitSample sample = {
+          .data = (float*)data,
+          .len = bytesLen
+        };
+        cvector_push_back(manager->samples, sample);
+      } else {
+        printf("  %s (not loaded)\n", dataFiles[i]);
+      }
     }
   }
 
