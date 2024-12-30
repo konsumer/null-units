@@ -215,14 +215,16 @@ int main(int argc, char *argv[]) {
   if (c > 0) {
     printf("data:\n");
     int bytesLen;
+    int sampleId = 0;
     for (i=0; i<c; i++) {
       unsigned char* data = read_file(dataFiles[i], &bytesLen);
       if (data != NULL && bytesLen > 0) {
-        printf("  %s\n", dataFiles[i]);
+        printf("  %d: %s\n", sampleId, dataFiles[i]);
         NullUnitSample sample = {
           .data = (float*)data,
           .len = bytesLen
         };
+        sampleId++;
         cvector_push_back(manager->samples, sample);
       } else {
         printf("  %s (not loaded)\n", dataFiles[i]);

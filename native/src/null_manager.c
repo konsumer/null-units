@@ -22,6 +22,16 @@ NullUnitManager* null_manager_create() {
 
   cvector_push_back(manager->units, audioOut);
 
+  // track built-ins
+  NullUnitAvailable unitForList = (NullUnitAvailable){
+    .name="out",
+    .path=NULL
+  };
+  cvector_push_back(manager->available_units, unitForList);
+  unitForList.name = strdup("osc");
+  cvector_push_back(manager->available_units, unitForList);
+
+
   return manager;
 }
 
