@@ -58,9 +58,9 @@ typedef struct {
     struct SoundIo* soundio;
     struct SoundIoDevice* device;
     struct SoundIoOutStream* outstream;
-    cvector_vector_type(NullUnit*) units;
+    cvector_vector_type(NullUnit*) units; // these are loaded
     cvector_vector_type(float*) samples;
-    cvector_vector_type(NullUnitAvailable) available_units;
+    cvector_vector_type(NullUnitAvailable) available_units; // these are found via paths or whatever
 } NullUnitManager;
 
 // Initialize the audio system and manager
