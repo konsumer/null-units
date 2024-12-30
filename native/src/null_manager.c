@@ -45,7 +45,7 @@ void null_manager_disconnect(NullUnitManager* manager, unsigned int unitSourceId
 }
 
 // set a param of a unit
-void null_manager_set_param(NullUnitManager* manager, unsigned int unitSourceId, unsigned int paramId, NullUnitParamValue value, unsigned int timefromNowInSeconds) {
+void null_manager_set_param(NullUnitManager* manager, unsigned int unitSourceId, unsigned int paramId, NullUnitParamValue value, float timefromNowInSeconds) {
 
 }
 

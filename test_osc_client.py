@@ -56,8 +56,9 @@ def main():
     try:
         client.send_message("/unit/load", "osc")
         client.send_message("/unit/connect", [1, 0, 0, 0])
-        client.send_message("/unit/param", [1, 0, 1, 0]) # type=sqr
-        client.send_message("/unit/param", [1, 1, 60, 0]) # note=mid-C
+        # unit, param, value, timeoffse
+        client.send_message("/unit/param", [1, 0, 1, 0.0]) # type=sqr
+        client.send_message("/unit/param", [1, 1, 60, 0.0]) # note=mid-C
 
         while True:
             time.sleep(1)

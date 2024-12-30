@@ -79,8 +79,8 @@ int handle_unit_param_i(const char *path, const char *types, lo_arg **argv, int 
   unsigned int unitSourceId = argv[0]->i;
   unsigned int paramId = argv[1]->i;
   NullUnitParamValue value = { .i=argv[2]->i };
-  unsigned int timefromNowInSeconds = argv[3]->i;
-  printf("unit param: %u %u %d %u\n", unitSourceId, paramId, value.i, timefromNowInSeconds);
+  float timefromNowInSeconds = argv[3]->f;
+  printf("unit param: %u %u %d %f\n", unitSourceId, paramId, value.i, timefromNowInSeconds);
 
   NullUnitManager* manager = (NullUnitManager*)managerPtr;
   null_manager_set_param(manager, unitSourceId, paramId, value, timefromNowInSeconds);
@@ -97,8 +97,8 @@ int handle_unit_param_f(const char *path, const char *types, lo_arg **argv, int 
   unsigned int unitSourceId = argv[0]->i;
   unsigned int paramId = argv[1]->i;
   NullUnitParamValue value = { .f=argv[2]->f };
-  unsigned int timefromNowInSeconds = argv[3]->i;
-  printf("unit param: %u %u %f %u\n", unitSourceId, paramId, value.f, timefromNowInSeconds);
+  float timefromNowInSeconds = argv[3]->f;
+  printf("unit param: %u %u %f %f\n", unitSourceId, paramId, value.f, timefromNowInSeconds);
 
   NullUnitManager* manager = (NullUnitManager*)managerPtr;
   null_manager_set_param(manager, unitSourceId, paramId, value, timefromNowInSeconds);
@@ -162,8 +162,8 @@ int main(int argc, char *argv[]) {
   lo_server_add_method(server, "/unit/unload", "i", handle_unit_unload, manager);
 
   // depends on type
-  lo_server_add_method(server, "/unit/param", "iiii", handle_unit_param_i, manager);
-  lo_server_add_method(server, "/unit/param", "iifi", handle_unit_param_f, manager);
+  lo_server_add_method(server, "/unit/param", "iiif", handle_unit_param_i, manager);
+  lo_server_add_method(server, "/unit/param", "iiff", handle_unit_param_f, manager);
 
 
   printf("nullunit OSC Server listening on port %d\n", in_port);
