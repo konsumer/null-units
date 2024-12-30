@@ -46,4 +46,4 @@ The essential plan is basic WASI preview1, without files.
 
 - make a puredata frame for these, so you can play with them there, like `[null-unit~ oscillator]` (to load oscillator.wasm from central dir)
 - storage format loading several units, and their routing & initial values (to share instruments made up of units between things)
-- TODO: normalize all time to 4000 max ms, frequencies/percents are midi (0-127)
+- TODO: normalize all time to float seconds, frequencies/percents are midi (0-127)
