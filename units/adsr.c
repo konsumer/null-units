@@ -80,7 +80,7 @@ void destroy() {}
 float process(uint8_t position, float input, uint8_t channel, float sampleRate, double currentTime) {
     if (isnan(input)) return 0.0f;
 
-    bool newNoteOn = unitInfo.params[PARAM_TRIGGER].value.u;
+    bool newNoteOn = unitInfo.params[PARAM_TRIGGER].value.i;
     float attack = unitInfo.params[PARAM_ATTACK].value.f;
     float decay = unitInfo.params[PARAM_DECAY].value.f;
     float sustain = unitInfo.params[PARAM_SUSTAIN].value.f;

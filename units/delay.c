@@ -61,13 +61,7 @@ int main(int argc, char *argv[]) {
     };
 
     // Sync parameter (0 or 1)
-    unitInfo.params[PARAM_SYNC] = (NullUnitParamInfo) {
-        .name = "sync",
-        .value = {.u = false},
-        .min = {.u = false},
-        .max = {.u = true},
-        .type = NULL_PARAM_BOOL
-    };
+    gen_bool("sync", &unitInfo.params[PARAM_SYNC]);
 
     // Initialize delay lines
     for (int ch = 0; ch < 2; ch++) {

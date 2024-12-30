@@ -1,5 +1,10 @@
 // simple function to generate a UI from a unit's name/params
 
+// enum from units
+const NULL_PARAM_BOOL = 0
+const NULL_PARAM_I32 = 1
+const NULL_PARAM_F32 = 2
+
 export default function genUI(unit) {
   const f = document.createElement('form')
   f.id = `unit_${unit.id}`
@@ -11,10 +16,7 @@ export default function genUI(unit) {
   fs.appendChild(l)
 
   for (const param of unit.params) {
-    if (param.type === 0) { // bool
-
-    }
-    if (param.type === 0) { // boolean
+    if (param.type === NULL_PARAM_BOOL) {
       const i = document.createElement('input')
       param.input = i
       i.type = 'checkbox'
@@ -23,12 +25,6 @@ export default function genUI(unit) {
       i.checked = !!param.value
       i.name = param.name
       i.id = param.name
-
-      if ([1, 2].includes(param.type)) { // int
-        i.step = 1
-      } else {
-        i.step = 0.1
-      }
 
       i.addEventListener('change', e => {
         e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.checked ?  'true' : 'false' }`
@@ -42,7 +38,7 @@ export default function genUI(unit) {
       fs.appendChild(l)
       fs.appendChild(i)
     }
-    if ([1, 2, 3].includes(param.type)) { // numbers
+    if ([NULL_PARAM_I32, NULL_PARAM_F32].includes(param.type)) { // numbers
       const i = document.createElement('input')
       param.input = i
       i.type = 'range'
@@ -51,16 +47,12 @@ export default function genUI(unit) {
       i.value = param.value
       i.name = param.name
       i.id = param.name
-
-      if ([1, 2].includes(param.type)) { // int
-        i.step = 1
-      } else {
-        i.step = 0.1
-      }
+      i.step = param.type === NULL_PARAM_I32 ? '1' : '0.1'
 
       i.addEventListener('change', e => {
         e.target.form.querySelector(`label[for="${param.name}"]`).innerText = `${param.name}: ${e.target.value}`
-        unit.set_param(param.name, e.target.value)
+        const v = NULL_PARAM_I32 ? parseInt( e.target.value) :  parseFloat(e.target.value)
+        unit.set_param(param.name, v)
       })
 
       const l = document.createElement('label')

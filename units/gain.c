@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     .params = params
   };
 
+  // param gaain 0.0-127.0
   gen_midi_float("gain", &unitInfo.params[PARAM_GAIN]);
 
   return 0;

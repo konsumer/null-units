@@ -8,13 +8,14 @@ NullUnitManager* null_manager_create() {
 
   // index 0 is audioOut
   NullUnit* audioOut = malloc(sizeof(NullUnit));
-
   cvector_push_back(manager->units, audioOut);
+
   return manager;
 }
 
 // Clean up
 void null_manager_destroy(NullUnitManager* manager) {
+  // TODO: free all manager->units, manager->samples
   free(manager);
 }
 

@@ -26,16 +26,12 @@ int main(int argc, char *argv[]) {
     .params = params
   };
 
+  // Cutoff parameter (0.0 to 127.0: midi note)
   gen_midi_float("cutoff", &unitInfo.params[PARAM_CUTOFF]);
 
   // Resonance parameter (0.0 to 1.0)
-  unitInfo.params[PARAM_RESONANCE] = (NullUnitParamInfo) {
-    .name = "resonance",
-    .value = {.f = 0.0f},
-    .min = {.f = 0.0f},
-    .max = {.f = 1.0f},
-    .type = NULL_PARAM_F32
-  };
+  gen_midi_float("resonance", &unitInfo.params[PARAM_RESONANCE]);
+  unitInfo.params[PARAM_RESONANCE].max.f = 1.0f;
 
   return 0;
 }

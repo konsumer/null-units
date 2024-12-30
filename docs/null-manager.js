@@ -8,6 +8,8 @@ import UnitPitch from './unit-types/UnitPitch.js'
 import UnitScope from './unit-types/UnitScope.js'
 import UnitWasm from './unit-types/UnitWasm.js'
 
+// TODO: add gain to engine
+
 // this is the location of worker JS file
 const dirWorker = import.meta.url.split('/').slice(0, -1).join('/')
 

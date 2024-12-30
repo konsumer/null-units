@@ -15,14 +15,12 @@
 #define FRAMES_PER_BUFFER 256
 
 typedef enum {
-  NULL_PARAM_BOOL,  // stored as uint32_t
-  NULL_PARAM_U32,
+  NULL_PARAM_BOOL,  // stored as int32_t
   NULL_PARAM_I32,
   NULL_PARAM_F32
 } NullUnitParamType;
 
 typedef union {
-  uint32_t u;
   int32_t i;
   float f;
 } NullUnitParamValue;

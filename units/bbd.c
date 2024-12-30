@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
     };
 
     // Time in milliseconds
-    unitInfo.params[0] = (NullUnitParamInfo) {
+    unitInfo.params[PARAM_TIME] = (NullUnitParamInfo) {
         .name = "time",
         .value = {.f = 0.0f},
         .min = {.f = 1.0f},

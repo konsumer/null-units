@@ -14,7 +14,7 @@ export default class UnitOscillator {
     this.name = 'osc'
     this.params = [
       { "type": 1, "min": 0, "max": 3, "value": 0, "name": "type"},
-      { "type": 3, "min": 0, "max": 127, "value": 0, "name": "note" }
+      { "type": 2, "min": 0, "max": 127, "value": 0, "name": "note" }
     ]
     this.audioNode = this.manager.audioCtx.createOscillator()
     this.audioNode.type = 'sine'

@@ -18,14 +18,12 @@ void get_data_floats(unsigned int id, unsigned int offset, unsigned int length, 
 // these are exposed from a unit
 
 typedef enum {
-  NULL_PARAM_BOOL,  // stored as uint32_t
-  NULL_PARAM_U32,
+  NULL_PARAM_BOOL,  // stored as int32_t
   NULL_PARAM_I32,
   NULL_PARAM_F32
 } NullUnitParamType;
 
 typedef union {
-  uint32_t u;
   int32_t i;
   float f;
 } NullUnitParamValue;
@@ -81,10 +79,7 @@ NullUnitParamValue* param_get(uint8_t paramId);
 void param_string(NullUnitParamInfo param, char* out) {
   switch(param.type) {
     case NULL_PARAM_BOOL:
-      snprintf(out, 100, "%s: %s", param.name, param.value.u ? "true" : "false");
-      break;
-    case NULL_PARAM_U32:
-      snprintf(out, 100, "%s: %u", param.name, param.value.u);
+      snprintf(out, 100, "%s: %s", param.name, param.value.i ? "true" : "false");
       break;
     case NULL_PARAM_I32:
       snprintf(out, 100, "%s: %d", param.name, param.value.i);
@@ -122,7 +117,6 @@ float freqToNote(float freq) {
 }
 
 // initialize a f32 0-127 (for note/volume/etc)
-// this is such a common thing, I made a helper for it
 void gen_midi_float(char* name, NullUnitParamInfo* out) {
   NullUnitParamValue v;
   out->type = NULL_PARAM_F32;
@@ -134,15 +128,26 @@ void gen_midi_float(char* name, NullUnitParamInfo* out) {
   out->name = strdup(name);
 }
 
-// initialize a u32 0-127 (for note/volume/etc)
-// this is such a common thing, I made a helper for it
-void gen_midi_unsigned(char* name, NullUnitParamInfo* out) {
+// initialize a i32 0-127 (for note/volume/etc)
+void gen_midi_int(char* name, NullUnitParamInfo* out) {
   NullUnitParamValue v;
-  out->type = NULL_PARAM_U32;
-  v.u = 0;
+  out->type = NULL_PARAM_I32;
+  v.i = 0;
   out->min = v;
   out->value = v;
-  v.u = 127;
+  v.i = 127;
+  out->max = v;
+  out->name = strdup(name);
+}
+
+// initialize a boolean param
+void gen_bool(char* name, NullUnitParamInfo* out) {
+  NullUnitParamValue v;
+  out->type = NULL_PARAM_BOOL;
+  v.i = 0;
+  out->min = v;
+  out->value = v;
+  v.i = 1;
   out->max = v;
   out->name = strdup(name);
 }

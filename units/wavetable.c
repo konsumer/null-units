@@ -29,9 +29,9 @@ int main(int argc, char *argv[]) {
     .params = params
   };
 
-  gen_midi_unsigned("type", &unitInfo.params[PARAM_TYPE]); // u32 0-3 wave-type: sin/sqr/tri/saw
-  gen_midi_float("note", &unitInfo.params[PARAM_NOTE]); // f32 0-127 midi frequency
-  unitInfo.params[PARAM_TYPE].max.u = 3; // (0-3)
+  gen_midi_int("type", &unitInfo.params[PARAM_TYPE]); // i32 0-3 wave-type: sin/sqr/tri/saw
+  gen_midi_float("note", &unitInfo.params[PARAM_NOTE]); // f32 0.0-127.0 midi frequency
+  unitInfo.params[PARAM_TYPE].max.i = 3; // (0-3)
 
   // setup initial sample from host
   get_data_floats(0, 0, SAMPLE_COUNT, sample);
@@ -67,8 +67,8 @@ void param_set(uint8_t paramId, NullUnitParamValue* value) {
   }
 
   // change sample
-  if (paramId == PARAM_TYPE && value->u != unitInfo.params[PARAM_TYPE].value.u) {
-    get_data_floats(value->u, 0, SAMPLE_COUNT, sample);
+  if (paramId == PARAM_TYPE && value->i != unitInfo.params[PARAM_TYPE].value.i) {
+    get_data_floats(value->i, 0, SAMPLE_COUNT, sample);
   }
 
   unitInfo.params[paramId].value = *value;

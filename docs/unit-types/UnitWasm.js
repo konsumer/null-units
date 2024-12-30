@@ -53,19 +53,20 @@ export default class UnitWasm {
     if (this.params[pi]) {
       this.params[pi].value = value
 
-      if (this.params[pi].input){
-        if (this.params[pi].input.type === 'checkbox') {
-          if (this.params[pi].input.checked != value) {
-            this.params[pi].input.checked = value
-            this.params[pi].input.dispatchEvent(new Event('change'))
-          }
-        } else {
-          if (this.params[pi].input.value != value) {
-            this.params[pi].input.value = value
-            this.params[pi].input.dispatchEvent(new Event('change'))
-          }
-        }
-      }
+      // this seems a bit broke
+      // if (this.params[pi].input){
+      //   if (this.params[pi].input.type === 'checkbox') {
+      //     if (this.params[pi].input.checked != value) {
+      //       this.params[pi].input.checked = value
+      //       this.params[pi].input.dispatchEvent(new Event('change'))
+      //     }
+      //   } else {
+      //     if (this.params[pi].input.value != value) {
+      //       this.params[pi].input.value = value
+      //       this.params[pi].input.dispatchEvent(new Event('change'))
+      //     }
+      //   }
+      // }
     }
 
     setTimeout(() => {
