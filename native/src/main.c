@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
         sampleId++;
         cvector_push_back(manager->samples, sample);
       } else {
-        printf("  %s (not loaded)\n", dataFiles[i]);
+        printf("  X: %s (not loaded)\n", dataFiles[i]);
       }
     }
   }
