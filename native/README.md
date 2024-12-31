@@ -10,8 +10,12 @@ This implements a headless native host for null-units. It's not at all ready, I 
 ### usage
 
 ```bash
-# use docs/units to find units, preload samples like on web example, load bundle to connect everything
-./native/build/nullunits -u docs/units -d samples/sin.raw -d samples/sqr.raw -d samples/tri.raw -d samples/saw.raw -b example.bundle
+# use docs/units to find units, load bundle to connect everything
+./native/build/nullunits -u docs/units -b example.bundle
+
+# in addition to built-in "simple" samples, you can load raw PCM (maybe more formats later)
+# since built-in samples are 0-3, your samples will start at id 4
+./native/build/nullunits -u docs/units -d samples/whatever.raw
 ```
 
 ### todo
