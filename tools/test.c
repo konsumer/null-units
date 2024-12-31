@@ -15,9 +15,9 @@ int main() {
   signal(SIGINT, signal_handler);
 
   NullUnitManager* manager = null_manager_create();
+  null_manager_get_units(manager, "docs/units");
 
   // print available units
-  null_manager_get_units("docs/units", manager);
   int i=0;
   int c = cvector_size(manager->available_units);
   if (c > 0) {
@@ -42,8 +42,8 @@ int main() {
   null_manager_set_param(manager, osc, 1, value, 0.0f);
   printf("osc note (1) set to 60\n");
 
-
   while(keep_running) {
+    null_manager_process();
   }
 
   null_manager_destroy(manager);

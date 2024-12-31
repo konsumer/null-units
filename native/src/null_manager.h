@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include <math.h>
 
 #define CVECTOR_LOGARITHMIC_GROWTH
 #include "cvector.h"
@@ -108,8 +109,11 @@ NullUnitParamValue* null_manager_get_param(NullUnitManager* manager, unsigned in
 NullUnitnInfo* null_manager_get_info(NullUnitManager* manager, unsigned int unitSourceId);
 
 
-// get list of wasm files in a dir
-void null_manager_get_units(const char* dirname, NullUnitManager* managers);
+// load list of wasm files in a dir into manager->available_units
+void null_manager_get_units(NullUnitManager* manager, const char* dirname);
 
 // just read a file as bytes
 unsigned char* null_manager_read_file(char* filename, int* bytesRead);
+
+// run on every audio-frame (put in your update-loop)
+void null_manager_process();

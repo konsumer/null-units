@@ -227,9 +227,11 @@ int main(int argc, char *argv[]) {
     printf("unit paths:\n");
     for (i=0; i<c; i++) {
       printf("  %s\n", unitPaths[i]);
-      null_manager_get_units(unitPaths[i], manager);
+      null_manager_get_units(manager, unitPaths[i]);
     }
   }
+
+  // display avvailable units
   c = cvector_size(manager->available_units);
   if (c > 0) {
     printf("units:\n");
@@ -238,7 +240,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // TODO: for each bundle, run messages
+  // TODO: for each bundle, load file, run messages, and free bytes
   c = cvector_size(bundles);
   if (c > 0) {
     printf("bundles:\n");
@@ -274,6 +276,7 @@ int main(int argc, char *argv[]) {
 
   while (keep_running) {
     lo_server_recv_noblock(server, 100);
+    null_manager_process();
   }
 
   lo_address_free(client_address);
