@@ -42,9 +42,10 @@ Things are in flux right now, so check [null-unit.h](units/null-unit.h) to see w
 The essential plan is basic WASI preview1, without files.
 
 
-## ideas
+## ideas/todo
 
+- storage format loading several units, and their routing & initial values (to share instruments made up of units between things.) I am leaning towards OSC bundles of plain messages (laod units, set params, connect things, etc.)
+- normalize all time to float seconds, frequencies/percents are midi (0-127)
+- fix UI reactivity. currently it listens for change and the update is a bit jenk. Maybe it could be fixed with web-components, or better coupling
 - make a puredata frame for these, so you can play with them there, like `[null-unit~ oscillator]` (to load oscillator.wasm from central dir)
-- storage format loading several units, and their routing & initial values (to share instruments made up of units between things)
-- TODO: normalize all time to float seconds, frequencies/percents are midi (0-127)
-- TODO: fix UI reactivity. currently it listens for change and the update is a bit jenk. Maybe it could be fixed with web-components, or better coupling
+- make a wrapper for ladspa, so I can just compile those directly to units

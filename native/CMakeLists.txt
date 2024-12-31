@@ -31,3 +31,8 @@ file(GLOB_RECURSE NULLUNIT_SOURCES src/*.c)
 add_executable(${PROJECT_NAME} ${NULLUNIT_SOURCES})
 target_link_libraries(${PROJECT_NAME} wamr ${SOUNDIO_LIBRARY} ${LIBLO_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PRIVATE ${SOUNDIO_INCLUDE_DIR} ${LIBLO_INCLUDE_DIRS})
+
+list(FILTER NULLUNIT_SOURCES EXCLUDE REGEX "main\\.c$")
+add_executable(test ${NULLUNIT_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/../tools/test.c")
+target_link_libraries(test wamr ${SOUNDIO_LIBRARY} ${LIBLO_LIBRARIES})
+target_include_directories(test PRIVATE ${SOUNDIO_INCLUDE_DIR} ${LIBLO_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/src")

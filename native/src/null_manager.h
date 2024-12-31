@@ -108,10 +108,8 @@ NullUnitParamValue* null_manager_get_param(NullUnitManager* manager, unsigned in
 NullUnitnInfo* null_manager_get_info(NullUnitManager* manager, unsigned int unitSourceId);
 
 
-// SHARED UTILS
-
 // get list of wasm files in a dir
-void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable) *files);
+void null_manager_get_units(const char* dirname, NullUnitManager* managers);
 
 // just read a file as bytes
-unsigned char* read_file(char* filename, int* bytesRead);
+unsigned char* null_manager_read_file(char* filename, int* bytesRead);

@@ -83,7 +83,7 @@ NullUnitnInfo* null_manager_get_info(NullUnitManager* manager, unsigned int unit
 }
 
 // get list of wasm files in a dir
-void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable) *files) {
+void null_manager_get_units(const char* dirname, NullUnitManager* manager) {
     glob_t glob_result;
     char pattern[1024];
 
@@ -115,7 +115,7 @@ void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable
         };
 
         // Add to the vector
-        cvector_push_back(*files, unit);
+        cvector_push_back(manager->available_units, unit);
     }
 
     // Free the glob structure
@@ -123,7 +123,7 @@ void get_units_in_dir(const char* dirname, cvector_vector_type(NullUnitAvailable
 }
 
 // just read a file as bytes
-unsigned char* read_file(char* filename, int* bytesRead) {
+unsigned char* null_manager_read_file(char* filename, int* bytesRead) {
     FILE* file;
     unsigned char* buffer;
     long file_size;

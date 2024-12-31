@@ -227,7 +227,7 @@ int main(int argc, char *argv[]) {
     printf("unit paths:\n");
     for (i=0; i<c; i++) {
       printf("  %s\n", unitPaths[i]);
-      get_units_in_dir(unitPaths[i], &manager->available_units);
+      null_manager_get_units(unitPaths[i], manager);
     }
   }
   c = cvector_size(manager->available_units);
@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
     int bytesLen;
     int sampleId = 0;
     for (i=0; i<c; i++) {
-      unsigned char* data = read_file(dataFiles[i], &bytesLen);
+      unsigned char* data = null_manager_read_file(dataFiles[i], &bytesLen);
       if (data != NULL && bytesLen > 0) {
         printf("  %d: %s\n", sampleId, dataFiles[i]);
         NullUnitSample sample = {
