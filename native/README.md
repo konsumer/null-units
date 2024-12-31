@@ -4,13 +4,27 @@ This implements a headless native host for null-units. It's not at all ready, I 
 
 - OSC messages (over udp) automatically tied to every unit for live-control
 - presets (bundles) for loading, routing, and initial parameters
-- change unit dir from CLI options
 - preload data (samples, etc) from CLI options
+- change unit dir from CLI options
 
 ### usage
 
+```
+Usage: nullunits [options]
+Options:
+  -i, --inport PORT   UDP port to receive messages on (default: 53100)
+  -o, --outport PORT  UDP port to send responses on (default: 53101)
+  -u, --unit DIR      Directory path to find wasm-units - multiple ok
+  -b, --bundle FILE   File path to load bundle - multiple ok
+  -d, --data FILE     File path to load data (sample) - multiple ok
+```
+
+For `multiple ok` options, they are processed in order.
+
+#### examples
+
 ```bash
-# use docs/units to find units, load bundle to connect everything
+# use docs/units dir to find units, load bundle to connect everything
 ./native/build/nullunits -u docs/units -b example.bundle
 
 # in addition to built-in "simple" samples, you can load raw PCM (maybe more formats later)
