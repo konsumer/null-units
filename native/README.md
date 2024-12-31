@@ -3,7 +3,7 @@ This implements a headless native host for null-units. It's not at all ready, I 
 ### features
 
 - OSC messages (over udp) automatically tied to every unit for live-control
-- presets (bundles) for loading, routing, and initial parameters
+- presets (message bundles) for loading, routing, and initial parameters
 - preload data (samples, etc) from CLI options
 - change unit dir from CLI options
 
