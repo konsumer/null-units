@@ -27,6 +27,7 @@
     "build:adsr": "make docs/units/adsr.wasm",
     "native": "cd native && cmake -B build -G Ninja && cmake --build build",
     "watch": "npx -y nodemon -w units -e 'c h' --exec 'npm run build'",
-    "clean": "npx -y rimraf docs/units/*.wasm native/build"
+    "clean": "npx -y rimraf docs/units/*.wasm native/build",
+    "samples": "node tools/gen_samples.mjs && for i in samples/*.raw; do xxd -i $i;done > native/src/samples.h"
   }
 }

@@ -1,6 +1,5 @@
 #include "null_manager.h"
-
-// TODO: embed basic samples?
+#include "samples.h"
 
 // TODO: put these inside manager
 static struct SoundIo *soundio;
@@ -139,6 +138,19 @@ NullUnitManager* null_manager_create() {
   cvector_push_back(manager->available_units, unitForList);
   unitForList.name = strdup("osc");
   cvector_push_back(manager->available_units, unitForList);
+
+  // load built-in samples
+  NullUnitSample sample = { .len=samples_sin_raw_len, .data=(float*)samples_sin_raw };
+  cvector_push_back(manager->samples, sample);
+
+  sample.data = (float*)samples_sqr_raw;
+  cvector_push_back(manager->samples, sample);
+
+  sample.data = (float*)samples_tri_raw;
+  cvector_push_back(manager->samples, sample);
+
+  sample.data = (float*)samples_saw_raw;
+  cvector_push_back(manager->samples, sample);
 
   return manager;
 }
